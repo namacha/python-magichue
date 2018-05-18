@@ -26,7 +26,7 @@ class Light:
 
     def _send_with_checksum(self, data):
         data_with_checksum = self._attach_checksum(data)
-        self._send(struct.pack('!BBBB', *data_with_checksum))
+        self._send(struct.pack('!%dB' % len(data_with_checksum), *data_with_checksum))
         response = self._receive(4)
         return response
 
@@ -40,7 +40,8 @@ class Light:
 
     @classmethod
     def _attach_checksum(cls, arr):
-        checksum = sum(arr)
+        hex_checksum = hex(sum(arr))
+        checksum = int(hex_checksum, 16)
         return arr + [checksum]
 
     @property
