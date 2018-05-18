@@ -41,7 +41,7 @@ class Light:
     @classmethod
     def _attach_checksum(cls, arr):
         hex_checksum = hex(sum(arr))
-        checksum = int(hex_checksum, 16)
+        checksum = int(hex_checksum[-2:], 16)
         return arr + [checksum]
 
     @property
