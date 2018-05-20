@@ -31,7 +31,7 @@ class Color:
         return r, g, b
 
     def make_data(self):
-        is_white = 0xf0 if self.is_white else 0x0f
+        is_white = 0x0f if self.is_white else 0xf0
         return [self.SET_COLOR, self.r, self.g, self.b, self.w, is_white, 0x0f]  # 0x0f is a terminator
 
 
