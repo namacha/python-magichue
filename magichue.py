@@ -32,7 +32,7 @@ class Color:
 
     def make_data(self):
         is_white = 0xf0 if self.is_white else 0x0f
-        return [self.SET_COLOR, self.r, self.g, self.b, self.w, is_white]
+        return [self.SET_COLOR, self.r, self.g, self.b, self.w, is_white, 0x0f]  # 0x0f is a terminator
 
 
 class Light:
