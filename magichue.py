@@ -10,12 +10,12 @@ class Color:
 
     SET_COLOR = 0x31
 
-    def __init__(self):
+    def __init__(self, r=255, g=255, b=255, w=255, is_white=False):
         self.r = 0
         self.g = 0
         self.b = 0
         self.w = 0  # brightness of warm white light
-        self.is_white = False  # use warm white light
+        self.is_white = is_white  # use warm white light
 
     @staticmethod
     def color2rgb(code):
