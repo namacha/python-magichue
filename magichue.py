@@ -132,7 +132,7 @@ class Light:
         checksum = self._calc_checksum(data)
         return data + [checksum]
 
-    def get_status_data(self):
+    def _get_status_data(self):
         self._flush_receive_buffer()
         cmd, return_len = Status.QUERY_STATUS
         raw_data = self._send_with_checksum(cmd, return_len)
@@ -140,7 +140,7 @@ class Light:
         return data
 
     def _update_status(self):
-        data = self.get_status_data()
+        data = self._get_status_data()
         status = Status(data)
         color = status.color
         self._on = status.on
