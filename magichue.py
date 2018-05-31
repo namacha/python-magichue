@@ -9,7 +9,7 @@ PORT = 5577
 
 class Color:
     """ A Class represents color of light and its data. """
-
+    
     SET_COLOR = 0x31
 
     def __init__(self, r=255, g=255, b=255, w=255, is_white=False):
@@ -42,7 +42,7 @@ class Color:
             self.w,
             is_white,
             0x0f  # 0x0f is a terminator
-        ]  
+        ] 
         return data
 
 
@@ -54,40 +54,48 @@ class Status:
     OFF = 0x24
     QUERY_STATUS = [0x81, 0x8a, 0x8b], 14
 
-    def __init__(self, data):
+    def __init__(self):
         self.on = None
-        self.color = Color()
-        self.parse(data)
+        self._color = Color()
+        self._update_color()
+    
+    def _update_color(self):
+        self.r = self._color.r
+        self.g = self._color.g
+        self.b = self._color.b
+        self.w = self._color.w
+        self.is_white = self._color.is_white
 
     def parse(self, data):
         if data[0] != 0x81:
             return
         self.on = True if data[2] == self.ON else False
         is_white = True if data[12] == self.TRUE else False
-        self.color = Color(*data[6:10], is_white)
+        self._color = Color(*data[6:10], is_white)
+        self._update_color()
 
 
 class Light:
+    
+    def __repr__(self):
+        on = 'on' if self.on else 'off'
+        return '<Light: %s (%d,%d,%d,%d)>' % (on, self._status.r, self._status.g, self._status.b, self._status.w)
 
     def __init__(self, addr, port=PORT):
         self.addr = addr
         self.port = port
 
-        self.r = None
-        self.g = None
-        self.b = None
-        self.w = None
         self.hue = None
         self.saturate = None
         self.brightness = None
-        self.is_white = False
 
         self._name = None
-        self._on = False
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._status = Status()
         self._connect()
+        self._update_status()
 
     def _connect(self):
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._sock.connect((self.addr, self.port))
 
     def _send(self, data):
@@ -141,28 +149,80 @@ class Light:
 
     def _update_status(self):
         data = self._get_status_data()
-        status = Status(data)
-        color = status.color
-        self._on = status.on
-        self.r = color.r
-        self.g = color.g
-        self.b = color.b
-        self.w = color.w
-        self.is_white = color.is_white
+        self._status.parse(data)
+    
+    def _apply_status(self):
+        data = self._status._color.make_data()
+        self._send_with_checksum(data, 1)
+        
+    @property
+    def r(self):
+        return self._status.r
+    
+    @r.setter
+    def r(self, v):
+        if v not in range(0, 256):
+            raise ValueError
+        self._status._color.r = v
+        self._apply_status()
+
+    @property
+    def g(self):
+        return self._status.g
+        
+    @g.setter
+    def g(self, v):
+        if v not in range(0, 256):
+            raise ValueError
+        self._status._color.g = v
+        self._apply_status()
+
+    @property
+    def b(self):
+        return self._status.b
+
+    @b.setter
+    def b(self, v):
+        if v not in range(0, 256):
+            raise ValueError
+        self._status._color.b = v
+        self._apply_status()
+
+    @property
+    def w(self):
+        return self._status.w
+
+    @w.setter
+    def w(self, v):
+        if v not in range(0, 256):
+            raise ValueError
+        self._status._color.w = v
+        self._apply_status()
+
+    @property
+    def is_white(self):
+        return self._status.is_white
+
+    @is_white.setter
+    def is_white(self, v):
+        if not isinstance(v, bool):
+            raise ValueError
+        self._status._color.is_white = v
+        self._apply_status()
 
     @property
     def on(self):
-        return self._on
+        return self._status.on
 
     @on.setter
     def on(self, value):
         if not isinstance(value, bool):
             raise ValueError('Should be True or False')
         if value:
-            self._on = True
+            self._status.on = True
             return self._turn_on()
         else:
-            self._on = False
+            self._status.on = False
             return self._turn_off()
 
     @on.deleter
