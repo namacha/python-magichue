@@ -1,5 +1,7 @@
 # python-magichue
-Control Magic Hue in Python.
+Magichue is a cheap smart led bulb. Thet are available at Amazon or other online web shop.
+
+I tested this library with [this bulb](http://www.amazon.co.jp/exec/obidos/ASIN/B0777LXQ4R/hatena-blog-22/).
 
 
 # Example
@@ -17,4 +19,4 @@ light.on = True
 light.on = False
 ```
 
-Another features are in development.
+Other features are in development.
