@@ -124,6 +124,22 @@ class Light:
     def _apply_status(self):
         data = self._status.make_data()
         self._send_with_checksum(data, 1)
+
+    @property
+    def rgb(self):
+        return self._status.rgb
+
+    @rgb.setter
+    def rgb(self, rgb):
+        r, g, b = rgb
+        if r not in range(256):
+            raise ValueError("arg not in range(256)")
+        if g not in range(256):
+            raise ValueError("arg not in range(256)")
+        if b not in range(256):
+            raise ValueError("arg not in range(256)")
+        self._status = Status(r, g, b, self.w, self.is_white, self.on)
+        self._apply_status()
  
     @property
     def r(self):
