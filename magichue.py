@@ -7,30 +7,33 @@ import colorsys
 PORT = 5577
 
 
-class Color:
-    """ A Class represents color of light and its data. """
-    
+class Status:
+
+    TRUE = 0x0f
+    FALSE = 0xf0
+    ON = 0x23
+    OFF = 0x24
+    QUERY_STATUS = [0x81, 0x8a, 0x8b], 14
     SET_COLOR = 0x31
 
-    def __init__(self, r=255, g=255, b=255, w=255, is_white=False):
+    def __init__(self, r=0, g=0, b=0, w=255, is_white=True, on=True):
         self.r = r
         self.g = g
         self.b = b
         self.w = w  # brightness of warm white light
         self.is_white = is_white  # use warm white light
+        self.on = on 
 
-    @staticmethod
-    def color2rgb(code):
-        """ color2rgb('#0F232B')  # => (15, 35, 43)"""
-        if len(code) != 7:
-            raise ValueError
-        if code[0] != '#':
-            raise ValueError
-        code = code[1:]
-        r = int(code[0:2], 16)
-        g = int(code[2:4], 16)
-        b = int(code[4:], 16)
-        return r, g, b
+    @property
+    def rgb(self):
+        return (self.r, self.g, self.b)
+
+    def parse(self, data):
+        if data[0] != 0x81:
+            return
+        self.on = True if data[2] == self.ON else False
+        self.is_white = True if data[12] == self.TRUE else False
+        self.r, self.g, self.b, self.w = data[6:10]
 
     def make_data(self):
         is_white = 0x0f if self.is_white else 0xf0
@@ -46,57 +49,24 @@ class Color:
         return data
 
 
-class Status:
-
-    TRUE = 0x0f
-    FALSE = 0xf0
-    ON = 0x23
-    OFF = 0x24
-    QUERY_STATUS = [0x81, 0x8a, 0x8b], 14
-
-    def __init__(self):
-        self.on = None
-        self._color = Color()
-        self._update_color()
-    
-    def _update_color(self):
-        self.r = self._color.r
-        self.g = self._color.g
-        self.b = self._color.b
-        self.w = self._color.w
-        self.is_white = self._color.is_white
-
-    def parse(self, data):
-        if data[0] != 0x81:
-            return
-        self.on = True if data[2] == self.ON else False
-        is_white = True if data[12] == self.TRUE else False
-        self._color = Color(*data[6:10], is_white)
-        self._update_color()
-
-
 class Light:
     
     def __repr__(self):
         on = 'on' if self.on else 'off'
-        return '<Light: %s (%d,%d,%d,%d)>' % (on, self._status.r, self._status.g, self._status.b, self._status.w)
+        return '<Light: %s (r:%d g:%d b:%d w:%d)>' % (on, self._status.r, self._status.g, self._status.b, self._status.w)
 
-    def __init__(self, addr, port=PORT):
+    def __init__(self, addr, port=PORT, name="None"):
         self.addr = addr
         self.port = port
+        self.name = name
 
-        self.hue = None
-        self.saturate = None
-        self.brightness = None
-
-        self._name = None
         self._status = Status()
         self._connect()
         self._update_status()
 
     def _connect(self):
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._sock.connect((self.addr, self.port))
+            self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._sock.connect((self.addr, self.port))
 
     def _send(self, data):
         return self._sock.send(data)
@@ -150,30 +120,30 @@ class Light:
     def _update_status(self):
         data = self._get_status_data()
         self._status.parse(data)
-    
+ 
     def _apply_status(self):
-        data = self._status._color.make_data()
+        data = self._status.make_data()
         self._send_with_checksum(data, 1)
-        
+ 
     @property
     def r(self):
         return self._status.r
-    
+
     @r.setter
     def r(self, v):
-        if v not in range(0, 256):
-            raise ValueError
+        if v not in range(256):
+            raise ValueError("arg not in range(256)")
         self._status._color.r = v
         self._apply_status()
 
     @property
     def g(self):
         return self._status.g
-        
+
     @g.setter
     def g(self, v):
-        if v not in range(0, 256):
-            raise ValueError
+        if v not in range(256):
+            raise ValueError("arg not in range(256)")
         self._status._color.g = v
         self._apply_status()
 
@@ -183,8 +153,8 @@ class Light:
 
     @b.setter
     def b(self, v):
-        if v not in range(0, 256):
-            raise ValueError
+        if v not in range(256):
+            raise ValueError("arg not in range(256)")
         self._status._color.b = v
         self._apply_status()
 
@@ -194,8 +164,8 @@ class Light:
 
     @w.setter
     def w(self, v):
-        if v not in range(0, 256):
-            raise ValueError
+        if v not in range(256):
+            raise ValueError("arg not in range(256)")
         self._status._color.w = v
         self._apply_status()
 
@@ -206,8 +176,50 @@ class Light:
     @is_white.setter
     def is_white(self, v):
         if not isinstance(v, bool):
-            raise ValueError
+            raise ValueError("arg not in range(256)")
         self._status._color.is_white = v
+        self._apply_status()
+
+    @property
+    def hue(self):
+        h = colorsys.rgb_to_hsv(*self._status.rgb)[0]
+        return h
+
+    @hue.setter
+    def hue(self, h):
+        if not h <= 1:
+            raise ValueError("arg must not be more than 1")
+        sb = colorsys.rgb_to_hsv(*self._status.rgb)[1:]
+        rgb = map(int, colorsys.hsv_to_rgb(h, *sb))
+        self._status = Status(*rgb, self.w, self.is_white, self.on)
+        self._apply_status()
+
+    @property
+    def saturate(self):
+        s = colorsys.rgb_to_hsv(*self._status.rgb)[1]
+        return s
+
+    @saturate.setter
+    def saturate(self, s):
+        if not s <= 1:
+            raise ValueError("arg must not be more than 1")
+        h, v = colorsys.rgb_to_hsv(*self._status.rgb)[::2]
+        rgb = map(int, colorsys.hsv_to_rgb(h, s, v))
+        self._status = Status(*rgb, self.w, self.is_white, self.on)
+        self._apply_status()
+
+    @property
+    def brightness(self):
+        b = colorsys.rgb_to_hsv(*self._status.rgb)[2]
+        return b
+
+    @brightness.setter
+    def brightness(self, v):
+        if v not in range(256):
+            raise ValueError("arg not in range(256)")
+        hs = colorsys.rgb_to_hsv(*self._status.rgb)[:2]
+        rgb = map(int, colorsys.hsv_to_rgb(*hs, v))
+        self._status = Status(*rgb, self.w, self.is_white, self.on)
         self._apply_status()
 
     @property
@@ -217,7 +229,7 @@ class Light:
     @on.setter
     def on(self, value):
         if not isinstance(value, bool):
-            raise ValueError('Should be True or False')
+            raise ValueError("Should be True or False")
         if value:
             self._status.on = True
             return self._turn_on()
