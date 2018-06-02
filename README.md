@@ -1,5 +1,5 @@
 # python-magichue
-Magichue is a cheap smart led bulb. Thet are available at Amazon or other online web shop.
+Magichue is a cheap smart led bulb that you can controll hue/saturate/brightnes and power over WiFi. Thet are available at Amazon or other online web shop.
 
 I tested this library with [this bulb](http://www.amazon.co.jp/exec/obidos/ASIN/B0777LXQ4R/hatena-blog-22/).
 
