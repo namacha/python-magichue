@@ -149,7 +149,7 @@ class Light:
     def r(self, v):
         if v not in range(256):
             raise ValueError("arg not in range(256)")
-        self._status._color.r = v
+        self._status.r = v
         self._apply_status()
 
     @property
@@ -160,7 +160,7 @@ class Light:
     def g(self, v):
         if v not in range(256):
             raise ValueError("arg not in range(256)")
-        self._status._color.g = v
+        self._status.g = v
         self._apply_status()
 
     @property
@@ -171,7 +171,7 @@ class Light:
     def b(self, v):
         if v not in range(256):
             raise ValueError("arg not in range(256)")
-        self._status._color.b = v
+        self._status.b = v
         self._apply_status()
 
     @property
@@ -182,7 +182,7 @@ class Light:
     def w(self, v):
         if v not in range(256):
             raise ValueError("arg not in range(256)")
-        self._status._color.w = v
+        self._status.w = v
         self._apply_status()
 
     @property
@@ -193,7 +193,7 @@ class Light:
     def is_white(self, v):
         if not isinstance(v, bool):
             raise ValueError("arg not in range(256)")
-        self._status._color.is_white = v
+        self._status.is_white = v
         self._apply_status()
 
     @property
