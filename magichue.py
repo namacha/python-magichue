@@ -211,12 +211,12 @@ class Light:
         self._apply_status()
 
     @property
-    def saturate(self):
+    def saturation(self):
         s = colorsys.rgb_to_hsv(*self._status.rgb)[1]
         return s
 
-    @saturate.setter
-    def saturate(self, s):
+    @saturation.setter
+    def saturation(self, s):
         if not s <= 1:
             raise ValueError("arg must not be more than 1")
         h, v = colorsys.rgb_to_hsv(*self._status.rgb)[::2]

@@ -1,5 +1,5 @@
 # python-magichue
-Magichue is a cheap smart led bulb that you can controll hue/saturate/brightnes and power over WiFi. They are available at Amazon or other online web shop.
+Magichue is a cheap smart led bulb that you can controll hue/saturation/brightnes and power over WiFi. They are available at Amazon or other online web shop.
 
 I tested this library with [this bulb](http://www.amazon.co.jp/exec/obidos/ASIN/B0777LXQ4R/).
 
@@ -31,7 +31,7 @@ print(light.is_white)  # => whether warm white LED is using or not.
 print(light.w)  # => brightness of warm white LED.
 
 print(light.hue)  # => 0.7799352750809061
-print(light.saturate)  # => 0.8046875
+print(light.saturation)  # => 0.8046875
 print(light.brightness)  # => 128
 
 
@@ -42,9 +42,9 @@ light.rgb = (128, 64, 32)
 # By individual rgb value
 light.r = 255
 
-# By hue/saturate/brightness
+# By hue/saturation/brightness
 light.hue = 0.3
-light.saturate = 0.6
+light.saturation = 0.6
 light.brightness = 255
 
 ```
