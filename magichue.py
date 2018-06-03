@@ -226,16 +226,22 @@ class Light:
 
     @property
     def brightness(self):
-        b = colorsys.rgb_to_hsv(*self._status.rgb)[2]
+        if self.is_white:
+            b = self.w
+        else:
+            b = colorsys.rgb_to_hsv(*self._status.rgb)[2]
         return b
 
     @brightness.setter
     def brightness(self, v):
         if v not in range(256):
             raise ValueError("arg not in range(256)")
-        hs = colorsys.rgb_to_hsv(*self._status.rgb)[:2]
-        rgb = map(int, colorsys.hsv_to_rgb(*hs, v))
-        self._status = Status(*rgb, self.w, self.is_white, self.on)
+        if self.is_white:
+            self._status = Status(*self.rgb, v, self.is_white, self.on)
+        else:
+            hs = colorsys.rgb_to_hsv(*self._status.rgb)[:2]
+            rgb = map(int, colorsys.hsv_to_rgb(*hs, v))
+            self._status = Status(*rgb, self.w, self.is_white, self.on)
         self._apply_status()
 
     @property
