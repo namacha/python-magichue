@@ -1,5 +1,5 @@
 # python-magichue
-Magichue is a cheap smart led bulb that you can controll hue/saturation/brightnes and power over WiFi. They are available at Amazon or other online web shop.
+Magichue(as known as Magichome) is a cheap smart led bulb that you can controll hue/saturation/brightnes and power over WiFi. They are available at Amazon or other online web shop.
 
 I tested this library with [this bulb](http://www.amazon.co.jp/exec/obidos/ASIN/B0777LXQ4R/).
 
@@ -41,10 +41,18 @@ light.rgb = (128, 64, 32)
 
 # By individual rgb value
 light.r = 255
+light.g = 128
+light.b = 32
 
 # By hue/saturation/brightness
+# Hue and Saturation should be 0 to 255
 light.hue = 0.3
 light.saturation = 0.6
+# Brightness should be 0 to 255
+light.brightness = 255
+
+# Use Warm White bulb
+light.is_white = True
 light.brightness = 255
 
 ```
