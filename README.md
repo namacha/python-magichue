@@ -4,6 +4,12 @@ Magichue(as known as Magichome) is a cheap smart led bulb that you can controll 
 I tested this library with [this bulb](http://www.amazon.co.jp/exec/obidos/ASIN/B0777LXQ4R/).
 
 
+# Installation
+```
+$ pip install python-magichue
+```
+
+
 # Example
 Turn Magichue On/Off.
 ```python
