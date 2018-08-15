@@ -207,7 +207,8 @@ class Light:
             raise ValueError("arg must not be more than 1")
         sb = colorsys.rgb_to_hsv(*self._status.rgb)[1:]
         rgb = map(int, colorsys.hsv_to_rgb(h, *sb))
-        self._status = Status(*rgb, self.w, self.is_white, self.on)
+        r, g, b = rgb
+        self._status = Status(r, g, b, self.w, self.is_white, self.on)
         self._apply_status()
 
     @property
@@ -221,7 +222,8 @@ class Light:
             raise ValueError("arg must not be more than 1")
         h, v = colorsys.rgb_to_hsv(*self._status.rgb)[::2]
         rgb = map(int, colorsys.hsv_to_rgb(h, s, v))
-        self._status = Status(*rgb, self.w, self.is_white, self.on)
+        r, g, b = rgb
+        self._status = Status(r, g, b, self.w, self.is_white, self.on)
         self._apply_status()
 
     @property
@@ -237,11 +239,13 @@ class Light:
         if v not in range(256):
             raise ValueError("arg not in range(256)")
         if self.is_white:
-            self._status = Status(*self.rgb, v, self.is_white, self.on)
+            r, g, b = self.rgb
+            self._status = Status(r, g, b, v, self.is_white, self.on)
         else:
             hs = colorsys.rgb_to_hsv(*self._status.rgb)[:2]
-            rgb = map(int, colorsys.hsv_to_rgb(*hs, v))
-            self._status = Status(*rgb, self.w, self.is_white, self.on)
+            rgb = map(int, colorsys.hsv_to_rgb(hs[0], hs[1], v))
+            r, g, b = rgb
+            self._status = Status(r, g, b, self.w, self.is_white, self.on)
         self._apply_status()
 
     @property
