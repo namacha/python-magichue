@@ -3,6 +3,8 @@ import select
 import struct
 import colorsys
 
+import magichue.modes as modes
+
 
 PORT = 5577
 
@@ -23,6 +25,7 @@ class Status:
         self.w = w  # brightness of warm white light
         self.is_white = is_white  # use warm white light
         self.on = on 
+        self.mode = 97
 
     @property
     def rgb(self):
@@ -34,6 +37,7 @@ class Status:
         self.on = True if data[2] == self.ON else False
         self.is_white = True if data[12] == self.TRUE else False
         self.r, self.g, self.b, self.w = data[6:10]
+        self.mode = data[3]
 
     def make_data(self):
         is_white = 0x0f if self.is_white else 0xf0
@@ -50,10 +54,15 @@ class Status:
 
 
 class Light:
+
+    PORT = 5577
     
     def __repr__(self):
         on = 'on' if self.on else 'off'
-        return '<Light: %s (r:%d g:%d b:%d w:%d)>' % (on, self._status.r, self._status.g, self._status.b, self._status.w)
+        if self._status.mode == modes.NORMAL:
+            return '<Light: %s (r:%d g:%d b:%d w:%d)>' % (on, self._status.r, self._status.g, self._status.b, self._status.w)
+        else:
+            return '<Light: %s (%s)>' % (on, modes._VALUE_TO_NAME[self._status.mode])
 
     def __init__(self, addr, port=PORT, name="None"):
         self.addr = addr
@@ -265,4 +274,19 @@ class Light:
 
     @on.deleter
     def on(self):
+        pass
+
+    @property
+    def mode(self):
+        return modes._VALUE_TO_NAME[self._status.mode]
+
+    @mode.setter
+    def mode(self, value):
+        if value not in modes._VALUE_TO_NAME.keys():
+            raise ValueError('Invalid Mode Value')
+        self._status.mode = value
+        self._send_with_checksum(modes._data_change_mode(value), 1)
+
+    @mode.deleter
+    def mode(self):
         pass

@@ -1,4 +1,5 @@
 from .magichue import Light
+from .modes import *
 
 
 __author__ = 'namacha'
