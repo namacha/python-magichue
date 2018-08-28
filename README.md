@@ -43,7 +43,7 @@ print(light.b)
 
 ## Warm White bulb
 Magichue has a two types of leds. One is rgb led and the other is warm white led.
-To use warm white led, do as below.
+To use warm white led, do as following.
 ```python
 light.is_white = True
 # light.is_white = False  # This disables warm white led.
@@ -70,6 +70,43 @@ light.brightness = 255
 hue, saturation are float value from 0 to 1. brightness is a integer value from 0 to 255.
 These variables are also readable.
 
+
+## Changing mode
+Magichue blub has a built-in flash patterns.
+
+To check current mode, just
+```python
+print(light.mode)
+```
+
+and changing modes,
+```python
+light.mode = magichue.RAINBOW_CROSSFADE
+```
+
+These are built-in modes.
+```
+RAINBOW_CROSSFADE
+RED_GRADUALLY
+GREEN_GRADUALLY
+BLUE_GRADUALLY
+YELLOW_GRADUALLY
+BLUE_GREEN_GRADUALLY
+PURPLE_GRADUALLY
+WHITE_GRADUALLY
+RED_GREEN_CROSSFADE
+RED_BLUE_CROSSFADE
+GREEN_BLUE_CROSSFADE
+RAINBOW_STROBE
+GREEN_STROBE
+BLUE_STROBE
+YELLOW_STROBE
+BLUE_GREEN_STROBE
+PURPLE_STROBE
+WHITE_STROBE
+RAINBOW_FLASH
+NORMAL
+```
 
 
 # Example
