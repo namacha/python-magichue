@@ -1,4 +1,7 @@
 # python-magichue
+
+![demo](https://github.com/namacha/python-magichue/raw/image/hue.gif)
+
 Magichue(as known as Magichome) is a cheap smart led bulb that you can controll hue/saturation/brightnes and power over WiFi. They are available at Amazon or other online web shop.
 
 I tested this library with [this bulb](http://www.amazon.co.jp/exec/obidos/ASIN/B0777LXQ4R/).
