@@ -83,11 +83,12 @@ class Light:
     def _receive(self, length):
         return self._sock.recv(length)
 
-    def _send_with_checksum(self, data, response_len):
+    def _send_with_checksum(self, data, response_len, receive_response=False):
         data_with_checksum = self._attach_checksum(data)
         self._send(struct.pack('!%dB' % len(data_with_checksum), *data_with_checksum))
-        response = self._receive(response_len)
-        return response
+        if receive_response:
+            response = self._receive(response_len)
+            return response
 
     def _turn_on(self):
         on_data = [0x71, 0x23, 0x0f]
@@ -122,7 +123,7 @@ class Light:
     def _get_status_data(self):
         self._flush_receive_buffer()
         cmd, return_len = Status.QUERY_STATUS
-        raw_data = self._send_with_checksum(cmd, return_len)
+        raw_data = self._send_with_checksum(cmd, return_len, receive_response=True)
         data = struct.unpack('!%dB' % return_len, raw_data)
         return data
 
