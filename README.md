@@ -79,7 +79,8 @@ Magichue blub has a built-in flash patterns.
 
 To check current mode or speed, just
 ```python
-print(light.mode)
+print(light.mode_str)  # string name of mode
+print(light.mode)  # integer value
 ```
 
 and changing modes,
