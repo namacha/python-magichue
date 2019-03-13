@@ -25,7 +25,21 @@ class Status:
         self.w = w  # brightness of warm white light
         self.is_white = is_white  # use warm white light
         self.on = on 
+        self.speed = 1.0  # maximum by default
         self.mode = 97
+
+    @staticmethod
+    def speed2slowness(value):
+        """speed: float value 0 to 1.0
+        slowness: integer value 1 to 31"""
+        slowness = int(-30 * value + 31)
+        return slowness
+
+    @staticmethod
+    def slowness2speed(value):
+        """invert function of speed2slowness"""
+        speed = (31 - value) / 30
+        return speed
 
     @property
     def rgb(self):
@@ -38,6 +52,8 @@ class Status:
         self.is_white = True if data[12] == self.TRUE else False
         self.r, self.g, self.b, self.w = data[6:10]
         self.mode = data[3]
+        slowness = data[5]
+        self.speed = self.slowness2speed(slowness)
 
     def make_data(self):
         is_white = 0x0f if self.is_white else 0xf0
@@ -258,6 +274,19 @@ class Light:
         self._apply_status()
 
     @property
+    def speed(self):
+        return self._status.speed
+
+    @speed.setter
+    def speed(self, value):
+        if value >= 1:
+            value = 1
+        elif value < 0:
+            value = 0
+        self._status.speed = value
+        self._set_mode(self.mode)
+
+    @property
     def on(self):
         return self._status.on
 
@@ -271,22 +300,34 @@ class Light:
         else:
             self._status.on = False
             return self._turn_off()
-
+ 
     @on.deleter
     def on(self):
         pass
 
     @property
     def mode(self):
+        return self._status.mode
+
+    @property
+    def mode_str(self):
         return modes._VALUE_TO_NAME[self._status.mode]
+
+    @mode_str.setter
+    def mode_str(self, value):
+        pass
 
     @mode.setter
     def mode(self, value):
         if value not in modes._VALUE_TO_NAME.keys():
             raise ValueError('Invalid Mode Value')
-        self._status.mode = value
-        self._send_with_checksum(modes._data_change_mode(value), 1)
+        self._set_mode(value)
 
     @mode.deleter
     def mode(self):
         pass
+
+    def _set_mode(self, value):
+        self._status.mode = value
+        slowness = Status.speed2slowness(self._status.speed)
+        self._send_with_checksum(modes._data_change_mode(value, slowness), 1)

@@ -77,7 +77,7 @@ These variables are also readable.
 ## Changing mode
 Magichue blub has a built-in flash patterns.
 
-To check current mode, just
+To check current mode or speed, just
 ```python
 print(light.mode)
 ```
@@ -86,6 +86,7 @@ and changing modes,
 ```python
 light.mode = magichue.RAINBOW_CROSSFADE
 ```
+
 
 These are built-in modes.
 ```
@@ -109,6 +110,17 @@ PURPLE_STROBE
 WHITE_STROBE
 RAINBOW_FLASH
 NORMAL
+```
+
+
+### Changing the speed of mode
+
+speed is a float value from 0 to 1.
+
+```python
+print(light.speed)
+
+light.speed = 0.5  # set speed to 50%
 ```
 
 

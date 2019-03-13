@@ -47,6 +47,6 @@ _VALUE_TO_NAME = {
 }
 
 
-def _data_change_mode(mode):
-    d = [0x61, mode, 0x01, 0x0f]
+def _data_change_mode(mode, slowness):  # slowness is a integer value 1 to 49
+    d = [0x61, mode, slowness, 0x0f]
     return d
