@@ -62,6 +62,8 @@ light.rgb = (128, 0, 32)
 or
 ```python
 light.r = 200
+light.g = 0
+light.b = 32
 ```
 
 ### By hsb
@@ -77,7 +79,7 @@ These variables are also readable.
 ## Changing mode
 Magichue blub has a built-in flash patterns.
 
-To check current mode or speed, just
+To check current mode, just
 ```python
 print(light.mode_str)  # string name of mode
 print(light.mode)  # integer value
