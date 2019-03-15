@@ -6,6 +6,28 @@ Magichue(as known as Magichome) is a cheap smart led bulb that you can controll 
 
 I tested this library with [this bulb](http://www.amazon.co.jp/exec/obidos/ASIN/B0777LXQ4R/).
 
+# Example
+Rainbow cross-fade.
+```python
+import time
+import magichue
+
+
+light = magichue.Light('192.168.0.20')  # change address
+if not light.on:
+    light.on = True
+
+if light.is_white:
+  light.is_white = False
+
+light.rgb = (255, 255, 255)
+
+for hue in range(1000):
+    light.hue = hue / 1000
+    time.sleep(0.05)
+
+```
+
 
 # Installation
 ```
@@ -126,27 +148,5 @@ print(light.speed)
 light.speed = 0.5  # set speed to 50%
 ```
 
-
-# Example
-Rainbow cross-fade.
-```python
-import time
-import magichue
-
-
-light = magichue.Light('192.168.0.20')  # change address
-if not light.on:
-    light.on = True
-
-if light.is_white:
-  light.is_white = False
-
-light.rgb = (255, 255, 255)
-
-for hue in range(1000):
-    light.hue = hue / 1000
-    time.sleep(0.05)
-
-```
 
 Other features are in development.
