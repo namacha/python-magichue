@@ -73,7 +73,9 @@ To use warm white led, do as following.
 light.is_white = True
 # light.is_white = False  # This disables warm white led.
 ```
-If warm white is enabled, you can't set color to bulb.
+
+**If warm white is enabled, you can't change color of bulb!**
+So, you need to execute ``` light.is_white = False ``` before changing color.
 
 
 ## Setting color
