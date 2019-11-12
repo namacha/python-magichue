@@ -4,6 +4,7 @@ import struct
 import colorsys
 
 import magichue.modes as modes
+import magichue.bulb_types as bulb_types
 
 
 PORT = 5577
@@ -27,6 +28,7 @@ class Status:
         self.on = on 
         self.speed = 1.0  # maximum by default
         self.mode = 97
+        self.bulb_type = bulb_types.BULB_NORMAL
 
     @staticmethod
     def speed2slowness(value):
@@ -48,6 +50,7 @@ class Status:
     def parse(self, data):
         if data[0] != 0x81:
             return
+        self.bulb_type = data[1]
         self.on = data[2] == self.ON
         self.is_white = data[12] == self.TRUE
         self.r, self.g, self.b, self.w = data[6:10]
@@ -80,7 +83,7 @@ class Light:
         else:
             return '<Light: %s (%s)>' % (on, modes._VALUE_TO_NAME[self._status.mode])
 
-    def __init__(self, addr, port=PORT, name="None"):
+    def __init__(self, addr, port=PORT, name="None", confirm_receive_on_send=None):
         self.addr = addr
         self.port = port
         self.name = name
@@ -88,6 +91,11 @@ class Light:
         self._status = Status()
         self._connect()
         self._update_status()
+
+        if confirm_receive_on_send is not None:
+            self.confirm_receive_on_send = confirm_receive_on_send
+        else:
+            self.confirm_receive_on_send = True if self._status.bulb_type == bulb_types.BULB_NORMAL else False
 
     def _connect(self):
             self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -99,19 +107,20 @@ class Light:
     def _receive(self, length):
         return self._sock.recv(length)
 
-    def _send_with_checksum(self, data, response_len):
+    def _send_with_checksum(self, data, response_len, receive=True):
         data_with_checksum = self._attach_checksum(data)
         self._send(struct.pack('!%dB' % len(data_with_checksum), *data_with_checksum))
-        response = self._receive(response_len)
-        return response
+        if receive:
+            response = self._receive(response_len)
+            return response
 
     def _turn_on(self):
         on_data = [0x71, 0x23, 0x0f]
-        return self._send_with_checksum(on_data, 4)
+        return self._send_with_checksum(on_data, 4, receive=self.confirm_receive_on_send)
 
     def _turn_off(self):
         off_data = [0x71, 0x24, 0x0f]
-        return self._send_with_checksum(off_data, 4)
+        return self._send_with_checksum(off_data, 4, receive=self.confirm_receive_on_send)
 
     def _flush_receive_buffer(self, timeout=0.2):
         while True:
@@ -145,10 +154,13 @@ class Light:
     def _update_status(self):
         data = self._get_status_data()
         self._status.parse(data)
+
+    def update_status(self):
+        self._update_status()
  
     def _apply_status(self):
         data = self._status.make_data()
-        self._send_with_checksum(data, 1)
+        self._send_with_checksum(data, 1, receive=self.confirm_receive_on_send)
 
     @property
     def rgb(self):
@@ -330,4 +342,4 @@ class Light:
     def _set_mode(self, value):
         self._status.mode = value
         slowness = Status.speed2slowness(self._status.speed)
-        self._send_with_checksum(modes._data_change_mode(value, slowness), 1)
+        self._send_with_checksum(modes._data_change_mode(value, slowness), 1, receive=self.confirm_receive_on_send)
