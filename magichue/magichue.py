@@ -48,8 +48,8 @@ class Status:
     def parse(self, data):
         if data[0] != 0x81:
             return
-        self.on = True if data[2] == self.ON else False
-        self.is_white = True if data[12] == self.TRUE else False
+        self.on = data[2] == self.ON
+        self.is_white = data[12] == self.TRUE
         self.r, self.g, self.b, self.w = data[6:10]
         self.mode = data[3]
         slowness = data[5]
