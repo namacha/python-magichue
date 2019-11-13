@@ -40,6 +40,7 @@ __all__ = [
     'CustomMode',
 ]
 
+
 class Mode:
 
     RESPONSE_LEN = RESPONSE_LEN_CHANGE_MODE
@@ -51,7 +52,7 @@ class Mode:
         return self.name
 
     def __init__(self, value, speed, name):
-        self.value = value 
+        self.value = value
         self.speed = speed
         self.name = name
 

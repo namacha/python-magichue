@@ -10,6 +10,7 @@ def speed2slowness(value):
     slowness = int(-30 * value + 31)
     return slowness
 
+
 def slowness2speed(value):
     """invert function of speed2slowness"""
     speed = (31 - value) / 30

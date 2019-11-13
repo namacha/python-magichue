@@ -22,7 +22,7 @@ class Status:
         self.b = b
         self.w = w  # brightness of warm white light
         self.is_white = is_white  # use warm white light
-        self.on = on 
+        self.on = on
         self.speed = 1.0  # maximum by default
         self.mode = modes.NORMAL
         self.bulb_type = bulb_types.BULB_NORMAL
@@ -53,22 +53,34 @@ class Status:
             self.w,
             is_white,
             0x0f  # 0x0f is a terminator
-        ] 
+        ]
         return data
 
 
 class Light:
 
     PORT = 5577
-    
+
     def __repr__(self):
         on = 'on' if self.on else 'off'
         if self._status.mode.value == modes._NORMAL:
-            return '<Light: %s (r:%d g:%d b:%d w:%d)>' % (on, self._status.r, self._status.g, self._status.b, self._status.w)
+            return '<Light: {} (r:{} g:{} b:{} w:{})>'.format(
+                on,
+                self._status.r,
+                self._status.g,
+                self._status.b,
+                self._status.w,
+            )
         else:
             return '<Light: %s (%s)>' % (on, self._status.mode.name)
 
-    def __init__(self, addr, port=PORT, name="None", confirm_receive_on_send=None, allow_fading=True):
+    def __init__(
+            self,
+            addr,
+            port=PORT,
+            name="None",
+            confirm_receive_on_send=None,
+            allow_fading=True):
         self.addr = addr
         self.port = port
         self.name = name
@@ -82,11 +94,12 @@ class Light:
         if confirm_receive_on_send is not None:
             self.confirm_receive_on_send = confirm_receive_on_send
         else:
-            self.confirm_receive_on_send = True if self._status.bulb_type == bulb_types.BULB_NORMAL else False
+            self.confirm_receive_on_send =\
+                self._status.bulb_type == bulb_types.BULB_NORMAL
 
     def _connect(self):
-            self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._sock.connect((self.addr, self.port))
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._sock.connect((self.addr, self.port))
 
     def _send(self, data):
         return self._sock.send(data)
@@ -96,7 +109,9 @@ class Light:
 
     def _send_with_checksum(self, data, response_len, receive=True):
         data_with_checksum = self._attach_checksum(data)
-        self._send(struct.pack('!%dB' % len(data_with_checksum), *data_with_checksum))
+        format_str = '!%dB' % len(data_with_checksum)
+        data = struct.pack(format_str, *data_with_checksum)
+        self._send(data)
         if receive:
             response = self._receive(response_len)
             return response
@@ -138,7 +153,7 @@ class Light:
             commands.QUERY_STATUS_2,
             commands.QUERY_STATUS_3,
         ]
- 
+
         raw_data = self._send_with_checksum(
             cmd,
             commands.RESPONSE_LEN_QUERY_STATUS,
@@ -152,7 +167,7 @@ class Light:
 
     def update_status(self):
         self._update_status()
- 
+
     def _apply_status(self):
         data = self._status.make_data()
         if not self.allow_fading:
@@ -183,7 +198,7 @@ class Light:
             raise ValueError("arg not in range(256)")
         self._status = Status(r, g, b, self.w, self.is_white, self.on)
         self._apply_status()
- 
+
     @property
     def r(self):
         return self._status.r
@@ -318,7 +333,7 @@ class Light:
         else:
             self._status.on = False
             return self._turn_off()
- 
+
     @on.deleter
     def on(self):
         pass
