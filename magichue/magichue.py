@@ -5,19 +5,16 @@ import colorsys
 
 import magichue.modes as modes
 import magichue.bulb_types as bulb_types
-
+import magichue.commands as commands
+import magichue.utils as utils
 
 PORT = 5577
 
 
 class Status:
 
-    TRUE = 0x0f
-    FALSE = 0xf0
     ON = 0x23
     OFF = 0x24
-    QUERY_STATUS = [0x81, 0x8a, 0x8b], 14
-    SET_COLOR = 0x31
 
     def __init__(self, r=0, g=0, b=0, w=255, is_white=True, on=True):
         self.r = r
@@ -25,23 +22,10 @@ class Status:
         self.b = b
         self.w = w  # brightness of warm white light
         self.is_white = is_white  # use warm white light
-        self.on = on 
+        self.on = on
         self.speed = 1.0  # maximum by default
-        self.mode = 97
+        self.mode = modes.NORMAL
         self.bulb_type = bulb_types.BULB_NORMAL
-
-    @staticmethod
-    def speed2slowness(value):
-        """speed: float value 0 to 1.0
-        slowness: integer value 1 to 31"""
-        slowness = int(-30 * value + 31)
-        return slowness
-
-    @staticmethod
-    def slowness2speed(value):
-        """invert function of speed2slowness"""
-        speed = (31 - value) / 30
-        return speed
 
     @property
     def rgb(self):
@@ -51,42 +35,57 @@ class Status:
         if data[0] != 0x81:
             return
         self.bulb_type = data[1]
-        self.on = data[2] == self.ON
-        self.is_white = data[12] == self.TRUE
+        self.on = data[2] == commands.ON
+        self.is_white = data[12] == commands.TRUE
         self.r, self.g, self.b, self.w = data[6:10]
-        self.mode = data[3]
+        mode_value = data[3]
+        self.mode = modes._VALUE_TO_MODE[mode_value]
         slowness = data[5]
-        self.speed = self.slowness2speed(slowness)
+        self.speed = utils.slowness2speed(slowness)
 
     def make_data(self):
         is_white = 0x0f if self.is_white else 0xf0
         data = [
-            self.SET_COLOR,
+            commands.SET_COLOR,
             self.r,
             self.g,
             self.b,
             self.w,
             is_white,
             0x0f  # 0x0f is a terminator
-        ] 
+        ]
         return data
 
 
 class Light:
 
     PORT = 5577
-    
+
     def __repr__(self):
         on = 'on' if self.on else 'off'
-        if self._status.mode == modes.NORMAL:
-            return '<Light: %s (r:%d g:%d b:%d w:%d)>' % (on, self._status.r, self._status.g, self._status.b, self._status.w)
+        if self._status.mode.value == modes._NORMAL:
+            return '<Light: {} (r:{} g:{} b:{} w:{})>'.format(
+                on,
+                self._status.r,
+                self._status.g,
+                self._status.b,
+                self._status.w,
+            )
         else:
-            return '<Light: %s (%s)>' % (on, modes._VALUE_TO_NAME[self._status.mode])
+            return '<Light: %s (%s)>' % (on, self._status.mode.name)
 
-    def __init__(self, addr, port=PORT, name="None", confirm_receive_on_send=None):
+    def __init__(
+            self,
+            addr,
+            port=PORT,
+            name="None",
+            confirm_receive_on_send=None,
+            allow_fading=True):
         self.addr = addr
         self.port = port
         self.name = name
+
+        self.allow_fading = allow_fading
 
         self._status = Status()
         self._connect()
@@ -95,11 +94,12 @@ class Light:
         if confirm_receive_on_send is not None:
             self.confirm_receive_on_send = confirm_receive_on_send
         else:
-            self.confirm_receive_on_send = True if self._status.bulb_type == bulb_types.BULB_NORMAL else False
+            self.confirm_receive_on_send =\
+                self._status.bulb_type == bulb_types.BULB_NORMAL
 
     def _connect(self):
-            self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._sock.connect((self.addr, self.port))
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._sock.connect((self.addr, self.port))
 
     def _send(self, data):
         return self._sock.send(data)
@@ -109,18 +109,20 @@ class Light:
 
     def _send_with_checksum(self, data, response_len, receive=True):
         data_with_checksum = self._attach_checksum(data)
-        self._send(struct.pack('!%dB' % len(data_with_checksum), *data_with_checksum))
+        format_str = '!%dB' % len(data_with_checksum)
+        data = struct.pack(format_str, *data_with_checksum)
+        self._send(data)
         if receive:
             response = self._receive(response_len)
             return response
 
     def _turn_on(self):
-        on_data = [0x71, 0x23, 0x0f]
-        return self._send_with_checksum(on_data, 4, receive=self.confirm_receive_on_send)
+        on_data = [commands.TURN_ON_1, commands.TURN_ON_2, commands.TURN_ON_3]
+        return self._send_with_checksum(on_data, commands.RESPONSE_LEN_POWER, receive=self.confirm_receive_on_send)
 
     def _turn_off(self):
-        off_data = [0x71, 0x24, 0x0f]
-        return self._send_with_checksum(off_data, 4, receive=self.confirm_receive_on_send)
+        off_data = [commands.TURN_OFF_1, commands.TURN_OFF_2, commands.TURN_OFF_3]
+        return self._send_with_checksum(off_data, commands.RESPONSE_LEN_POWER, receive=self.confirm_receive_on_send)
 
     def _flush_receive_buffer(self, timeout=0.2):
         while True:
@@ -146,9 +148,17 @@ class Light:
 
     def _get_status_data(self):
         self._flush_receive_buffer()
-        cmd, return_len = Status.QUERY_STATUS
-        raw_data = self._send_with_checksum(cmd, return_len)
-        data = struct.unpack('!%dB' % return_len, raw_data)
+        cmd = [
+            commands.QUERY_STATUS_1,
+            commands.QUERY_STATUS_2,
+            commands.QUERY_STATUS_3,
+        ]
+
+        raw_data = self._send_with_checksum(
+            cmd,
+            commands.RESPONSE_LEN_QUERY_STATUS,
+        )
+        data = struct.unpack('!%dB' % commands.RESPONSE_LEN_QUERY_STATUS, raw_data)
         return data
 
     def _update_status(self):
@@ -157,10 +167,21 @@ class Light:
 
     def update_status(self):
         self._update_status()
- 
+
     def _apply_status(self):
         data = self._status.make_data()
-        self._send_with_checksum(data, 1, receive=self.confirm_receive_on_send)
+        if not self.allow_fading:
+            c = modes.CustomMode(
+                mode=modes.MODE_JUMP,
+                speed=0.1,
+                colors=[(self._status.r, self._status.g, self._status.b)],
+            )
+            self._set_mode(c)
+        self._send_with_checksum(
+            data,
+            commands.RESPONSE_LEN_SET_COLOR,
+            receive=self.confirm_receive_on_send
+        )
 
     @property
     def rgb(self):
@@ -177,7 +198,7 @@ class Light:
             raise ValueError("arg not in range(256)")
         self._status = Status(r, g, b, self.w, self.is_white, self.on)
         self._apply_status()
- 
+
     @property
     def r(self):
         return self._status.r
@@ -312,7 +333,7 @@ class Light:
         else:
             self._status.on = False
             return self._turn_off()
- 
+
     @on.deleter
     def on(self):
         pass
@@ -330,16 +351,20 @@ class Light:
         pass
 
     @mode.setter
-    def mode(self, value):
-        if value not in modes._VALUE_TO_NAME.keys():
-            raise ValueError('Invalid Mode Value')
-        self._set_mode(value)
+    def mode(self, mode):
+        if isinstance(mode, modes.Mode):
+            mode.speed = self.speed
+            self._set_mode(mode)
 
     @mode.deleter
     def mode(self):
         pass
 
-    def _set_mode(self, value):
-        self._status.mode = value
-        slowness = Status.speed2slowness(self._status.speed)
-        self._send_with_checksum(modes._data_change_mode(value, slowness), 1, receive=self.confirm_receive_on_send)
+    def _set_mode(self, mode):
+        mode.speed = self.speed
+        self._status.mode = mode
+        self._send_with_checksum(
+            mode._make_data(),
+            mode.RESPONSE_LEN,
+            receive=self.confirm_receive_on_send
+        )

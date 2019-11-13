@@ -5,7 +5,7 @@ import magichue
 
 setup(
     name='python-magichue',
-    version='0.2.1',
+    version=magichue.__version__,
     url='https://github.com/namacha/python-magichue',
     author=magichue.__author__,
     author_email='mac.ayu15@gmail.com',
