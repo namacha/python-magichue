@@ -103,11 +103,11 @@ class Light:
 
     def _turn_on(self):
         on_data = [commands.TURN_ON_1, commands.TURN_ON_2, commands.TURN_ON_3]
-        return self._send_with_checksum(on_data, RESPONSE_LEN_POWER, receive=self.confirm_receive_on_send)
+        return self._send_with_checksum(on_data, commands.RESPONSE_LEN_POWER, receive=self.confirm_receive_on_send)
 
     def _turn_off(self):
-        OFF_data = [commands.TURN_OFF_1, commands.TURN_OFF_2, commands.TURN_OFF_3]
-        return self._send_with_checksum(off_data, RESPONSE_LEN_POWER, receive=self.confirm_receive_on_send)
+        off_data = [commands.TURN_OFF_1, commands.TURN_OFF_2, commands.TURN_OFF_3]
+        return self._send_with_checksum(off_data, commands.RESPONSE_LEN_POWER, receive=self.confirm_receive_on_send)
 
     def _flush_receive_buffer(self, timeout=0.2):
         while True:
