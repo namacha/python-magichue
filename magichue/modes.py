@@ -48,9 +48,7 @@ class Mode:
         return '<Mode: {}>'.format(self._status_text())
 
     def _status_text(self):
-        return '{}'.format(
-            _VALUE_TO_NAME.get(self.value, 'UNKNOWN'),
-        )
+        return self.name
 
     def __init__(self, value, speed, name):
         self.value = value 
