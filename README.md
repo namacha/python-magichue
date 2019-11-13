@@ -99,6 +99,15 @@ light.brightness = 255
 hue, saturation are float value from 0 to 1. brightness is a integer value from 0 to 255.
 These variables are also readable.
 
+### Note about stripe bulb
+Stripe bulb doesn't seem to allow jump to another color when you change color.
+To disable fading effect,
+```python
+light.rgb = (128, 0, 20)  # It fades
+light.allow_fading = False  # True by default
+light.rgb = (20, 0, 128)  # Jumps
+```
+
 
 ## Changing mode
 Magichue blub has a built-in flash patterns.
@@ -149,6 +158,49 @@ print(light.speed)
 
 light.speed = 0.5  # set speed to 50%
 ```
+
+
+
+
+### Custom Modes
+You can create custom light flash patterns.
+
+**mode**
+- MODE_JUMP
+- MODE_GRADUALLY
+- MODE_STROBE
+
+**speed**
+A float value 0 to 1
+
+**colors**
+A list of rgb(tuple or list) which has less than 17 length.
+
+```python
+from magichue import (
+    CustomMode,
+    MODE_JUMP,
+)
+
+
+# Creating Mode
+mypattern1 = CustomMode(
+    mode=MODE_JUMP,
+    speed=0.5,
+    colors=[
+        (128, 0, 32),
+        (100, 20, 0),
+        (30, 30, 100),
+        (0, 0, 50)
+    ]
+)
+
+# Apply Mode
+light.mode = mypattern
+```
+
+
+
 
 
 Other features are in development.
