@@ -3,15 +3,15 @@ import select
 import struct
 import colorsys
 
-import magichue.modes as modes
-import magichue.bulb_types as bulb_types
-import magichue.commands as commands
-import magichue.utils as utils
+from . import modes
+from . import bulb_types
+from . import commands
+from . import utils
 
 PORT = 5577
 
 
-class Status:
+class Status(object):
 
     ON = 0x23
     OFF = 0x24
@@ -57,7 +57,7 @@ class Status:
         return data
 
 
-class Light:
+class Light(object):
 
     PORT = 5577
 
