@@ -13,6 +13,19 @@ setup(
     description='A library to interface with Magichue(or Magichome)',
     long_description=open('README.md').read(),
     license=magichue.__license__,
+    classifiers=[
+        'Development Status :: 2 - Pre-Alpha',
+        'Environment :: Other Environment',
+        'Intended Audience :: Developers',
+        'Intended Audience :: Education',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: Microsoft :: Windows',
+        'Operating System :: MacOS',
+        'Operating System :: POSIX :: Linux',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3',
+        'Topic :: Home Automation',
+    ]
     
     packages=find_packages(),
 )
