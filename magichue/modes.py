@@ -1,4 +1,4 @@
-from magichue.commands import (
+from .commands import (
     CHANGE_MODE,
     CUSTOM_MODE,
     CUSTOM_MODE_TERMINATOR_1,
@@ -7,7 +7,7 @@ from magichue.commands import (
     RESPONSE_LEN_CUSTOM_MODE,
 )
 
-from magichue.utils import speed2slowness
+from .utils import speed2slowness
 
 
 __all__ = [
