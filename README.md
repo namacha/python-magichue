@@ -196,7 +196,7 @@ mypattern1 = CustomMode(
 )
 
 # Apply Mode
-light.mode = mypattern
+light.mode = mypattern1
 ```
 
 
