@@ -25,7 +25,6 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 3',
         'Topic :: Home Automation',
-    ]
-    
+    ],
     packages=find_packages(),
 )
