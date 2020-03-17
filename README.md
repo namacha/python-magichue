@@ -41,6 +41,14 @@ import magichue
 light = magichue.Light('192.168.0.20')
 ```
 
+## Discover bulbs on lan
+```python
+from magichue import discover_bulbs
+
+
+print(discover_bulbs())  # returns list of bulb address
+```
+
 ## Power State
 
 ### Getting power status.
