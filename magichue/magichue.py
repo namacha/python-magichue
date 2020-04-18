@@ -27,7 +27,27 @@ class Status(object):
         self.mode = modes.NORMAL
         self.bulb_type = bulb_types.BULB_NORMAL
 
-    @property
+    def update_r(self, v):
+        self.r = utils.round_value(v, 0, 255)
+
+    def update_g(self, v):
+        self.g = utils.round_value(v, 0, 255)
+
+    def update_b(self, v):
+        self.b = utils.round_value(v, 0, 255)
+
+    def update_rgb(self, v):
+        try:
+            r, g, b = v
+        except ValueError:
+            raise ValueError('Invalid value: rgb must be a list or tuple which has 3 items')
+        self.update_r(r)
+        self.update_g(g)
+        self.update_b(b)
+
+    def update_w(self, v):
+        self.w = utils.round_value(v, 0, 255)
+
     def rgb(self):
         return (self.r, self.g, self.b)
 
@@ -185,18 +205,11 @@ class Light(object):
 
     @property
     def rgb(self):
-        return self._status.rgb
+        return self._status.rgb()
 
     @rgb.setter
     def rgb(self, rgb):
-        r, g, b = rgb
-        if r not in range(256):
-            raise ValueError("arg not in range(256)")
-        if g not in range(256):
-            raise ValueError("arg not in range(256)")
-        if b not in range(256):
-            raise ValueError("arg not in range(256)")
-        self._status = Status(r, g, b, self.w, self.is_white, self.on)
+        self._status.update_rgb(rgb)
         self._apply_status()
 
     @property
@@ -205,9 +218,7 @@ class Light(object):
 
     @r.setter
     def r(self, v):
-        if v not in range(256):
-            raise ValueError("arg not in range(256)")
-        self._status.r = v
+        self._status.update_r(v)
         self._apply_status()
 
     @property
@@ -216,9 +227,7 @@ class Light(object):
 
     @g.setter
     def g(self, v):
-        if v not in range(256):
-            raise ValueError("arg not in range(256)")
-        self._status.g = v
+        self._status.update_g(v)
         self._apply_status()
 
     @property
@@ -227,9 +236,7 @@ class Light(object):
 
     @b.setter
     def b(self, v):
-        if v not in range(256):
-            raise ValueError("arg not in range(256)")
-        self._status.b = v
+        self._status.update_b(v)
         self._apply_status()
 
     @property
@@ -238,9 +245,7 @@ class Light(object):
 
     @w.setter
     def w(self, v):
-        if v not in range(256):
-            raise ValueError("arg not in range(256)")
-        self._status.w = v
+        self._status.update_w(v)
         self._apply_status()
 
     @property
@@ -249,39 +254,38 @@ class Light(object):
 
     @is_white.setter
     def is_white(self, v):
+        # TODO: fix message
         if not isinstance(v, bool):
-            raise ValueError("arg not in range(256)")
+            raise ValueError("Invalid value: value must be a bool.")
         self._status.is_white = v
         self._apply_status()
 
     @property
     def hue(self):
-        h = colorsys.rgb_to_hsv(*self._status.rgb)[0]
+        h = colorsys.rgb_to_hsv(*self._status.rgb())[0]
         return h
 
     @hue.setter
     def hue(self, h):
         if not h <= 1:
             raise ValueError("arg must not be more than 1")
-        sb = colorsys.rgb_to_hsv(*self._status.rgb)[1:]
+        sb = colorsys.rgb_to_hsv(*self._status.rgb())[1:]
         rgb = map(int, colorsys.hsv_to_rgb(h, *sb))
-        r, g, b = rgb
-        self._status = Status(r, g, b, self.w, self.is_white, self.on)
+        self._status.update_rgb(rgb)
         self._apply_status()
 
     @property
     def saturation(self):
-        s = colorsys.rgb_to_hsv(*self._status.rgb)[1]
+        s = colorsys.rgb_to_hsv(*self._status.rgb())[1]
         return s
 
     @saturation.setter
     def saturation(self, s):
         if not s <= 1:
             raise ValueError("arg must not be more than 1")
-        h, v = colorsys.rgb_to_hsv(*self._status.rgb)[::2]
+        h, v = colorsys.rgb_to_hsv(*self._status.rgb())[::2]
         rgb = map(int, colorsys.hsv_to_rgb(h, s, v))
-        r, g, b = rgb
-        self._status = Status(r, g, b, self.w, self.is_white, self.on)
+        self._status.update_rgb(rgb)
         self._apply_status()
 
     @property
@@ -289,21 +293,17 @@ class Light(object):
         if self.is_white:
             b = self.w
         else:
-            b = colorsys.rgb_to_hsv(*self._status.rgb)[2]
+            b = colorsys.rgb_to_hsv(*self._status.rgb())[2]
         return b
 
     @brightness.setter
     def brightness(self, v):
-        if v not in range(256):
-            raise ValueError("arg not in range(256)")
         if self.is_white:
-            r, g, b = self.rgb
-            self._status = Status(r, g, b, v, self.is_white, self.on)
+            self._status.update_w(v)
         else:
-            hs = colorsys.rgb_to_hsv(*self._status.rgb)[:2]
+            hs = colorsys.rgb_to_hsv(*self._status.rgb())[:2]
             rgb = map(int, colorsys.hsv_to_rgb(hs[0], hs[1], v))
-            r, g, b = rgb
-            self._status = Status(r, g, b, self.w, self.is_white, self.on)
+            self._status.update_rgb(rgb)
         self._apply_status()
 
     @property
@@ -316,6 +316,7 @@ class Light(object):
             value = 1
         elif value < 0:
             value = 0
+        value = utils.round_value(value, 0, 1)
         self._status.speed = value
         self._set_mode(self.mode)
 
@@ -326,7 +327,7 @@ class Light(object):
     @on.setter
     def on(self, value):
         if not isinstance(value, bool):
-            raise ValueError("Should be True or False")
+            raise ValueError("Invalid value: Should be True or False")
         if value:
             self._status.on = True
             return self._turn_on()
@@ -339,10 +340,6 @@ class Light(object):
         pass
 
     @property
-    def mode(self):
-        return self._status.mode
-
-    @property
     def mode_str(self):
         import warnings
         message = '`.mode_str` is deprecated and will be removed in the future. `.mode_str` returns empty strings now.'
@@ -353,6 +350,10 @@ class Light(object):
     def mode_str(self, value):
         pass
 
+    @property
+    def mode(self):
+        return self._status.mode
+ 
     @mode.setter
     def mode(self, mode):
         if isinstance(mode, modes.Mode):
