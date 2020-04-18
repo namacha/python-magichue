@@ -344,7 +344,10 @@ class Light(object):
 
     @property
     def mode_str(self):
-        return modes._VALUE_TO_NAME[self._status.mode]
+        import warnings
+        message = '`.mode_str` is deprecated and will be removed in the future. `.mode_str` returns empty strings now.'
+        warnings.warn(message, UserWarning)
+        return ''
 
     @mode_str.setter
     def mode_str(self, value):
