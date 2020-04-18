@@ -1,11 +1,14 @@
-BULB_NORMAL = 0x44
+BULB_RGBWW = 0x44
 BULB_TAPE = 0x33
+BULB_RGBWWCW = 0x35
 
 
 def str_bulb_type(bulb_type):
-    if bulb_type == BULB_NORMAL:
-        return 'NORMAL'
+    if bulb_type == BULB_RGBWW:
+        return 'rgbww'
     if bulb_type == BULB_TAPE:
-        return 'TAPE'
+        return 'tape'
+    if bulb_type == BULB_RGBWWCW:
+        return 'rgbwwcw'
     else:
         return 'UNKNOWN'

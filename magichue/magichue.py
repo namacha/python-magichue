@@ -16,16 +16,18 @@ class Status(object):
     ON = 0x23
     OFF = 0x24
 
-    def __init__(self, r=0, g=0, b=0, w=255, is_white=True, on=True):
+    def __init__(self, r=0, g=0, b=0, w=0, cw=0, is_white=True, on=True):
         self.r = r
         self.g = g
         self.b = b
         self.w = w  # brightness of warm white light
+        self.cw = cw  # brightness of cold white light
         self.is_white = is_white  # use warm white light
         self.on = on
         self.speed = 1.0  # maximum by default
         self.mode = modes.NORMAL
-        self.bulb_type = bulb_types.BULB_NORMAL
+        self.bulb_type = bulb_types.BULB_RGBWW
+        self.version = 0
 
     def update_r(self, v):
         self.r = utils.round_value(v, 0, 255)
@@ -56,24 +58,38 @@ class Status(object):
             return
         self.bulb_type = data[1]
         self.on = data[2] == commands.ON
-        self.is_white = data[12] == commands.TRUE
-        self.r, self.g, self.b, self.w = data[6:10]
         mode_value = data[3]
+        self.r, self.g, self.b, self.w = data[6:10]
+        self.version = data[10]
+        self.cw = data[11]
+        self.is_white = data[12] == commands.TRUE
         self.mode = modes._VALUE_TO_MODE[mode_value]
         slowness = data[5]
         self.speed = utils.slowness2speed(slowness)
 
     def make_data(self):
         is_white = 0x0f if self.is_white else 0xf0
-        data = [
-            commands.SET_COLOR,
-            self.r,
-            self.g,
-            self.b,
-            self.w,
-            is_white,
-            0x0f  # 0x0f is a terminator
-        ]
+        if self.bulb_type == bulb_types.BULB_RGBWWCW:
+            data = [
+                commands.SET_COLOR,
+                self.r,
+                self.g,
+                self.b,
+                self.w if self.w else 0,
+                self.cw,
+                is_white,
+                0x0f  # 0x0f is a terminator
+            ]
+        else:
+            data = [
+                commands.SET_COLOR,
+                self.r,
+                self.g,
+                self.b,
+                self.w if self.w else 0,
+                is_white,
+                0x0f  # 0x0f is a terminator
+            ]
         return data
 
 
@@ -83,39 +99,45 @@ class Light(object):
 
     def __repr__(self):
         on = 'on' if self.on else 'off'
-        if self._status.mode.value == modes._NORMAL:
-            return '<Light: {} (r:{} g:{} b:{} w:{})>'.format(
-                on,
-                self._status.r,
-                self._status.g,
-                self._status.b,
-                self._status.w,
-            )
-        else:
+        if self._status.mode.value != modes._NORMAL:
             return '<Light: %s (%s)>' % (on, self._status.mode.name)
+        else:
+            if self._status.bulb_type == bulb_types.BULB_RGBWW:
+                return '<Light: {} (r:{} g:{} b:{} w:{})>'.format(
+                    on,
+                    *(self._status.rgb()),
+                    self._status.w,
+                )
+            if self._status.bulb_type == bulb_types.BULB_RGBWWCW:
+                return '<Light: {} (r:{} g:{} b:{} w:{} cw:{})>'.format(
+                    on,
+                    *(self._status.rgb()),
+                    self._status.w,
+                    self._status.cw,
+                )
+            if self._status.bulb_type == bulb_types.BULB_TAPE:
+                return '<Light: {} (r:{} g:{} b:{})>'.format(
+                    on,
+                    *(self._status.rgb()),
+                )
 
     def __init__(
             self,
             addr,
             port=PORT,
             name="None",
-            confirm_receive_on_send=None,
+            confirm_receive_on_send=False,
             allow_fading=True):
         self.addr = addr
         self.port = port
         self.name = name
 
+        self.confirm_receive_on_send = confirm_receive_on_send
         self.allow_fading = allow_fading
 
         self._status = Status()
         self._connect()
         self._update_status()
-
-        if confirm_receive_on_send is not None:
-            self.confirm_receive_on_send = confirm_receive_on_send
-        else:
-            self.confirm_receive_on_send =\
-                self._status.bulb_type == bulb_types.BULB_NORMAL
 
     def _connect(self):
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
