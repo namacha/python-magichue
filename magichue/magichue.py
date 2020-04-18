@@ -42,7 +42,9 @@ class Status(object):
         try:
             r, g, b = v
         except ValueError:
-            raise ValueError('Invalid value: rgb must be a list or tuple which has 3 items')
+            raise ValueError(
+                'Invalid value: rgb must be a list or tuple which has 3 items'
+            )
         self.update_r(r)
         self.update_g(g)
         self.update_b(b)
@@ -160,11 +162,23 @@ class Light(object):
 
     def _turn_on(self):
         on_data = [commands.TURN_ON_1, commands.TURN_ON_2, commands.TURN_ON_3]
-        return self._send_with_checksum(on_data, commands.RESPONSE_LEN_POWER, receive=self.confirm_receive_on_send)
+        return self._send_with_checksum(
+            on_data,
+            commands.RESPONSE_LEN_POWER,
+            receive=self.confirm_receive_on_send
+        )
 
     def _turn_off(self):
-        off_data = [commands.TURN_OFF_1, commands.TURN_OFF_2, commands.TURN_OFF_3]
-        return self._send_with_checksum(off_data, commands.RESPONSE_LEN_POWER, receive=self.confirm_receive_on_send)
+        off_data = [
+            commands.TURN_OFF_1,
+            commands.TURN_OFF_2,
+            commands.TURN_OFF_3
+        ]
+        return self._send_with_checksum(
+            off_data,
+            commands.RESPONSE_LEN_POWER,
+            receive=self.confirm_receive_on_send
+        )
 
     def _flush_receive_buffer(self, timeout=0.2):
         while True:
@@ -200,7 +214,10 @@ class Light(object):
             cmd,
             commands.RESPONSE_LEN_QUERY_STATUS,
         )
-        data = struct.unpack('!%dB' % commands.RESPONSE_LEN_QUERY_STATUS, raw_data)
+        data = struct.unpack(
+            '!%dB' % commands.RESPONSE_LEN_QUERY_STATUS,
+            raw_data
+        )
         return data
 
     def _update_status(self):
@@ -276,7 +293,6 @@ class Light(object):
 
     @is_white.setter
     def is_white(self, v):
-        # TODO: fix message
         if not isinstance(v, bool):
             raise ValueError("Invalid value: value must be a bool.")
         self._status.is_white = v
@@ -364,7 +380,8 @@ class Light(object):
     @property
     def mode_str(self):
         import warnings
-        message = '`.mode_str` is deprecated and will be removed in the future. `.mode_str` returns empty strings now.'
+        message =\
+            '`.mode_str` is deprecated and will be removed in the future.'
         warnings.warn(message, UserWarning)
         return ''
 
@@ -375,7 +392,7 @@ class Light(object):
     @property
     def mode(self):
         return self._status.mode
- 
+
     @mode.setter
     def mode(self, mode):
         if isinstance(mode, modes.Mode):

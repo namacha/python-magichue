@@ -8,6 +8,7 @@ def make_socket(timeout):
     sock.settimeout(timeout)
     return sock
 
+
 def discover_bulbs(timeout=1):
     DISCOVERY_PORT = 48899
     DISCOVERY_MSG = b"HF-A11ASSISTHREAD"
@@ -26,4 +27,4 @@ def discover_bulbs(timeout=1):
         pass
 
     sock.close()
-    return addrs 
+    return addrs
