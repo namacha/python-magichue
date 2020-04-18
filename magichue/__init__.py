@@ -1,5 +1,6 @@
-from .magichue import Light, discover_bulbs
+from .magichue import Light
 from .modes import *
+from .discover import discover_bulbs
 
 
 __author__ = 'namacha'
