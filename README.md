@@ -4,7 +4,7 @@
 
 Magichue(as known as Magichome) is a cheap smart led bulb that you can controll hue/saturation/brightnes and power over WiFi. They are available at Amazon or other online web shop.
 
-I tested this library with [this bulb](http://www.amazon.co.jp/exec/obidos/ASIN/B0777LXQ4R/).
+I tested this library with RGBWWCW(v7), RGB(v8), RGBWW(v8) bulbs.
 
 # Example
 Rainbow cross-fade.
@@ -74,18 +74,30 @@ print(light.g)
 print(light.b)
 ```
 
-## Warm White bulb
-Magichue has a two types of leds. One is rgb led and the other is warm white led.
-To use warm white led, do as following.
+## White LEDs
+If your bulbs support white leds, you can change brightness(0-255) of white leds.
+
+To use white led,
 ```python
 light.is_white = True
-# light.is_white = False  # This disables warm white led.
+# light.is_white = False  # This disables white led.
 ```
 
-**If warm white is enabled, you can't change color of bulb!**
+**If white led is enabled, you can't change color of bulb!**
 So, you need to execute ``` light.is_white = False ``` before changing color.
 
+### Warm White(ww)
+```python
+light.cw = 0
+light.w = 255
+```
 
+### Cold White (cw)
+```python
+light.w = 0
+light.cw = 255
+```
+ 
 ## Setting color
 ### By rgb
 ```python
