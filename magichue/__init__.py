@@ -4,5 +4,5 @@ from .discover import discover_bulbs
 
 
 __author__ = 'namacha'
-__version__ = '0.2.9.1'
+__version__ = '0.2.9.2'
 __license__ = 'MIT'
