@@ -300,6 +300,16 @@ class Light(object):
         self._apply_status()
         
     @property
+    def cww(self):
+        return (self._status.cw,self._status.w)
+
+    @cww.setter
+    def cww(self, cww):
+        self._status.update_cw(cww[0])
+        self._status.update_w(cww[1])
+        self._apply_status()
+        
+    @property
     def is_white(self):
         return self._status.is_white
 
