@@ -51,6 +51,9 @@ class Status(object):
 
     def update_w(self, v):
         self.w = utils.round_value(v, 0, 255)
+      
+    def update_cw(self, v):
+        self.cw = utils.round_value(v, 0, 255)
 
     def rgb(self):
         return (self.r, self.g, self.b)
@@ -286,7 +289,16 @@ class Light(object):
     def w(self, v):
         self._status.update_w(v)
         self._apply_status()
+        
+    @property
+    def cw(self):
+        return self._status.cw
 
+    @cw.setter
+    def cw(self, v):
+        self._status.update_cw(v)
+        self._apply_status()
+        
     @property
     def is_white(self):
         return self._status.is_white
