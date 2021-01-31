@@ -68,7 +68,7 @@ class Status(object):
         self.version = data[10]
         self.cw = data[11]
         self.is_white = data[12] == commands.TRUE
-        self.mode = modes._VALUE_TO_MODE[mode_value]
+        self.mode = modes._VALUE_TO_MODE.get(mode_value, modes.Mode(mode_value, 1, 'UNKOWN'))
         slowness = data[5]
         self.speed = utils.slowness2speed(slowness)
 
