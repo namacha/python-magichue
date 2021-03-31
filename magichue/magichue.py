@@ -144,8 +144,9 @@ class Light(object):
         self._connect()
         self._update_status()
 
-    def _connect(self):
+    def _connect(self, timeout=1):
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._sock.settimeout(timeout)
         self._sock.connect((self.addr, self.port))
 
     def _send(self, data):
