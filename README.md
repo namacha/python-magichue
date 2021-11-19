@@ -219,8 +219,5 @@ mypattern1 = CustomMode(
 light.mode = mypattern1
 ```
 
-
-
-
-
+---
 Other features are in development.
