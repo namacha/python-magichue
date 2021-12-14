@@ -24,7 +24,7 @@ class Command:
     @classmethod
     def hex_array(cls, is_remote: bool=False):
         return cls.attach_checksum(
-            append_terminator(cls.array, is_remote)
+            cls.append_terminator(cls.array, is_remote)
         )
 
     @classmethod
