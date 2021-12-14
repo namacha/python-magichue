@@ -32,7 +32,7 @@ class Command:
         _arr = cls.attach_checksum(
             cls.append_terminator(cls.array, is_remote)
         )
-        return struct.pack('!%dB' % (len(_arr)+1), *_arr)
+        return struct.pack('!%dB' % len(_arr), *_arr)
 
     @classmethod
     def hex_string(cls, is_remote: bool=False):
