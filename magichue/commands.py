@@ -18,6 +18,13 @@ class Command:
         return checksum
 
     @classmethod
+    def from_array(cls, arr, response_length: int = 0):
+        cmd = Command
+        cmd.array = arr
+        cmd.response_length = response_length
+        return cmd
+
+    @classmethod
     def attach_checksum(cls, arr):
         return arr + [cls.calc_checksum(arr)]
 

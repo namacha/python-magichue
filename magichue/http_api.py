@@ -7,6 +7,8 @@ from string import (
 )
 import requests
 
+from .commands import Command
+
 
 API_BASE = 'https://wifij01us.magichue.net/app'
 UA = 'Magic Hue/1.2.2 (IOS,13.400000,ja_JP)'
@@ -102,8 +104,14 @@ class RemoteAPI:
         result = self._post_with_token('/sendRequestCommand/MagicHue', data)
         return result
 
-    def _send_command(self, data):
-        result = self._post_with_token('/sendCommandBatch/MagicHue', data)
+    def _send_command(self, cmd: Command, macaddr: str):
+        payload = {
+            "dataCommandItems": [{
+                "hexData": cmd.hex_string(),
+                "macAddress": macaddr
+            }]
+        }
+        result = self._post_with_token('/sendCommandBatch/MagicHue', payload)
         return result
 
     def get_devices(self):
