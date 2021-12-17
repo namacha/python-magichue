@@ -5,7 +5,7 @@ from typing import List
 class Command:
 
     array: List[int]
-    response_length: int
+    response_len: int
 
     @staticmethod
     def append_terminator(arr, is_remote):
@@ -18,10 +18,10 @@ class Command:
         return checksum
 
     @classmethod
-    def from_array(cls, arr, response_length: int = 0):
+    def from_array(cls, arr, response_len: int = 0):
         cmd = Command
         cmd.array = arr
-        cmd.response_length = response_length
+        cmd.response_len = response_len
         return cmd
 
     @classmethod
@@ -51,17 +51,27 @@ class Command:
 
 class TurnON(Command):
     array = [0x71, 0x23]
-    response_length = 14
+    response_len = 4
 
 
 class TurnOFF(Command):
     array = [0x71, 0x24]
-    response_length = 14
+    response_len = 4
 
 
 class QueryStatus(Command):
     array = [0x81, 0x8a, 0x8b]
-    response_length = 14
+    response_len = 14
+
+
+class QueryCurrentTime(Command):
+    array = [0x11, 0x1a, 0x1b]
+    response_len = 12
+
+
+class QueryTimers(Command):
+    array = [0x22, 0x2a, 0x2b]
+    response_len = 88
 
 
 QUERY_STATUS_1 = 0x81

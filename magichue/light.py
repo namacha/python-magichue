@@ -11,6 +11,7 @@ from .magichue import Status
 
 
 class AbstractLight(metaclass=ABCMeta):
+    '''An abstract class of MagicHue Light.'''
 
     on: bool = False
     status: Status = Status()
@@ -49,6 +50,9 @@ class RemoteLight(AbstractLight):
 
     def _send_command(self, cmd):
         self.api._send_command(cmd, self.macaddr)
+
+    def _send_request(self, cmd):
+        return self.api._send_request(cmd, self.macaddr)
 
     @staticmethod
     def str2hexarray(hexstr: str) -> tuple:

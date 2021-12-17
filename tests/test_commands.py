@@ -30,3 +30,10 @@ def test_turn_on_1():
 
 def test_turn_on_remote():
     assert commands.TurnON.hex_array(is_remote=True) == [0x71, 0x23, 0xf0, 0x84]
+
+
+def test_from_array():
+    arr = [0x31, 0xa1, 0xf0, 0x12]
+    cmd = commands.Command.from_array(arr)
+    assert cmd.hex_string() == "31a1f0120fe3"
+    assert cmd.hex_array() == arr + [0x0f, 0xe3]

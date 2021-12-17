@@ -82,6 +82,7 @@ class RemoteAPI:
             json=payload,
             headers={'User-Agent': UA, 'token':self.token}
         )
+        _LOGGER.debug(f'Got response({res.status_code}): {res.text}')
         if res.status_code != 200:
             raise HTTPError
         if res.json().get('code') != 0:
@@ -94,14 +95,20 @@ class RemoteAPI:
             API_BASE + endpoint,
             headers={'User-Agent': UA, 'token':self.token}
         )
+        _LOGGER.debug(f'Got response({res.status_code}): {res.text}')
         if res.status_code != 200:
             raise HTTPError
         if res.json().get('code') != 0:
             raise MagicHueAPIError(res.json().get('msg'))
         return res.json()
 
-    def _send_request(self, data):
-        result = self._post_with_token('/sendRequestCommand/MagicHue', data)
+    def _send_request(self, cmd: Command, macaddr: str):
+        payload = {
+            "hexData": cmd.hex_string(is_remote=True),
+            "macAddress": macaddr,
+            "responseCount": cmd.response_len
+        }
+        result = self._post_with_token('/sendRequestCommand/MagicHue', payload)
         return result
 
     def _send_command(self, cmd: Command, macaddr: str):
