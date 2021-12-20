@@ -1,7 +1,7 @@
 from .magichue import Light
 from .modes import *
 from .discover import discover_bulbs
-from .light import RemoteLight
+from .light import RemoteLight, LocalLight
 from .http_api import RemoteAPI
 
 

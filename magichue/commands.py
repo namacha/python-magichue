@@ -6,10 +6,14 @@ class Command:
 
     array: List[int]
     response_len: int
+    needs_terminator = True
 
-    @staticmethod
-    def append_terminator(arr, is_remote):
-        return arr + [0xf0 if is_remote else 0x0f]
+    @classmethod
+    def append_terminator(cls, arr, is_remote):
+        if cls.needs_terminator:
+            return arr + [0xf0 if is_remote else 0x0f]
+        else:
+            return arr
 
     @staticmethod
     def calc_checksum(arr):
@@ -29,20 +33,20 @@ class Command:
         return arr + [cls.calc_checksum(arr)]
 
     @classmethod
-    def hex_array(cls, is_remote: bool=False):
+    def hex_array(cls, is_remote: bool=False) -> list:
         return cls.attach_checksum(
             cls.append_terminator(cls.array, is_remote)
         )
 
     @classmethod
-    def byte_string(cls, is_remote: bool=False):
+    def byte_string(cls, is_remote: bool=False) -> bytes:
         _arr = cls.attach_checksum(
             cls.append_terminator(cls.array, is_remote)
         )
         return struct.pack('!%dB' % len(_arr), *_arr)
 
     @classmethod
-    def hex_string(cls, is_remote: bool=False):
+    def hex_string(cls, is_remote: bool=False) -> str:
         _arr = cls.attach_checksum(
             cls.append_terminator(cls.array, is_remote)
         )
@@ -50,26 +54,32 @@ class Command:
 
 
 class TurnON(Command):
+    '''Command: Turn on light bulb.'''
     array = [0x71, 0x23]
     response_len = 4
 
 
 class TurnOFF(Command):
+    '''Command: Turn off light bulb.'''
     array = [0x71, 0x24]
     response_len = 4
 
 
 class QueryStatus(Command):
+    '''Command: Query status of light bulb.'''
     array = [0x81, 0x8a, 0x8b]
     response_len = 14
+    needs_terminator = False
 
 
 class QueryCurrentTime(Command):
+    '''Command: Query time of bulb clock'''
     array = [0x11, 0x1a, 0x1b]
     response_len = 12
 
 
 class QueryTimers(Command):
+    '''Command: Query scheduled timers'''
     array = [0x22, 0x2a, 0x2b]
     response_len = 88
 
