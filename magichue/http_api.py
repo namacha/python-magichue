@@ -109,7 +109,7 @@ class RemoteAPI:
             "responseCount": cmd.response_len
         }
         result = self._post_with_token('/sendRequestCommand/MagicHue', payload)
-        return result
+        return result['data']
 
     def _send_command(self, cmd: Command, macaddr: str):
         payload = {

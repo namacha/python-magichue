@@ -1,13 +1,16 @@
 from abc import ABCMeta, abstractmethod
 import struct
+from datetime import datetime
 import socket
+import select
 import logging
 
 from .commands import (
     Command,
     TurnON,
     TurnOFF,
-    QueryStatus
+    QueryStatus,
+    QueryCurrentTime
 )
 
 from .magichue import Status
@@ -15,7 +18,11 @@ from . import modes
 from . import bulb_types
 
 
-_LOGGER = logging.getLogger()
+_LOGGER = logging.getLogger(__name__)
+
+
+class InvalidData(Exception):
+    pass
 
 
 class AbstractLight(metaclass=ABCMeta):
@@ -53,12 +60,26 @@ class AbstractLight(metaclass=ABCMeta):
                 )
 
     @abstractmethod
-    def _send_command(self, cmd: Command):
+    def _send_command(self, cmd: Command, send_only: bool = True):
         pass
 
     @abstractmethod
     def _get_status_data(self):
         pass
+
+    def get_current_time(self) -> datetime:
+        '''Get bulb clock time.'''
+
+        data = self._send_command(QueryCurrentTime, send_only=False)
+        bulb_date = datetime(
+            data[3] + 2000,  # Year
+            data[4],         # Month
+            data[5],         # Date
+            data[6],         # Hour
+            data[7],         # Minute
+            data[8],         # Second
+        )
+        return bulb_date
 
     def turn_on(self):
         self._send_command(TurnON)
@@ -84,9 +105,16 @@ class RemoteLight(AbstractLight):
         self.macaddr = macaddr
         self.status = Status()
 
-    def _send_command(self, cmd: Command):
-        #self._send_request(cmd)
-        return self.api._send_command(cmd, self.macaddr)
+    def _send_command(self, cmd: Command, send_only: bool = True):
+        if send_only:
+            return self.api._send_command(cmd, self.macaddr)
+        else:
+            data = self.str2hexarray(self._send_request(cmd))
+            if len(data) != cmd.response_len:
+                raise InvalidData(
+                    'Expect length: %d, got %d\n%s' % (response_len, len(data), str(data))
+                )
+            return data
 
     def _send_request(self, cmd: Command):
         return self.api._send_request(cmd, self.macaddr)
@@ -105,11 +133,65 @@ class RemoteLight(AbstractLight):
 class LocalLight(AbstractLight):
 
     port = 5577
+    timeout = 1
 
     def __init__(self, ipaddr):
         self.ipaddr = ipaddr
         self._connect()
         self.status = Status()
+
+    def _connect(self):
+        _LOGGER.debug('Trying to make a connection with bulb(%s)' % self.ipaddr)
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._sock.settimeout(self.timeout)
+        self._sock.connect((self.ipaddr, self.port))
+        _LOGGER.debug('Connection has been established with %s' % self.ipaddr)
+
+    def _send(self, data):
+        self._sock.sendall(data)
+
+    def _receive(self, length):
+        _LOGGER.debug('Trying to receive a data with %d bytes' % length)
+        raw_data = self._sock.recv(length)
+        _LOGGER.debug('Received data: %s' % str(raw_data))
+        return raw_data
+
+
+    def _flush_receive_buffer(self):
+        _LOGGER.debug('Flushing receive buffer')
+        while True:
+            read_sock, _, _ = select.select([self._sock], [], [], self.timeout)
+            if not read_sock:
+                _LOGGER.debug('Nothing received. buffer has been flushed')
+                break
+            _LOGGER.debug('There is stil something in the buffer')
+            _ = self._receive(255)
+
+    def _send_command(self, cmd: Command, send_only: bool = True):
+        _LOGGER.debug('Sending packet: {}'.format(cmd.byte_string()))
+        if send_only:
+            self._send(cmd.byte_string())
+        else:
+            self._flush_receive_buffer()
+            self._send(cmd.byte_string())
+            data = self._receive(cmd.response_len)
+            decoded_data = struct.unpack(
+                    '!%dB' % len(data),
+                    data
+            )
+            if len(data) == cmd.response_len:
+                return decoded_data
+            else:
+                raise InvalidData(
+                    'Expect length: %d, got %d\n%s' % (
+                        response_len,
+                        len(decoded_data),
+                        str(decoded_data)
+                    )
+                )
+
+    def _get_status_data(self):
+        data_arr = self._send_command(QueryStatus, send_only=False)
 
     def _connect(self, timeout=3):
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
