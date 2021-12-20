@@ -100,12 +100,18 @@ class AbstractLight(metaclass=ABCMeta):
 
 class RemoteLight(AbstractLight):
 
+    _LOGGER = logging.getLogger(__name__ + '.RemoteLight')
+
     def __init__(self, api, macaddr: str):
         self.api = api
         self.macaddr = macaddr
         self.status = Status()
 
     def _send_command(self, cmd: Command, send_only: bool = True):
+        self._LOGGER.debug('Sending command({}) to: {}'.format(
+            cmd.__name__,
+            self.macaddr,
+        ))
         if send_only:
             return self.api._send_command(cmd, self.macaddr)
         else:
@@ -132,6 +138,8 @@ class RemoteLight(AbstractLight):
 
 class LocalLight(AbstractLight):
 
+    _LOGGER = logging.getLogger(__name__ + '.LocalLight')
+
     port = 5577
     timeout = 1
 
@@ -141,34 +149,38 @@ class LocalLight(AbstractLight):
         self.status = Status()
 
     def _connect(self):
-        _LOGGER.debug('Trying to make a connection with bulb(%s)' % self.ipaddr)
+        self._LOGGER.debug('Trying to make a connection with bulb(%s)' % self.ipaddr)
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._sock.settimeout(self.timeout)
         self._sock.connect((self.ipaddr, self.port))
-        _LOGGER.debug('Connection has been established with %s' % self.ipaddr)
+        self._LOGGER.debug('Connection has been established with %s' % self.ipaddr)
 
     def _send(self, data):
         self._sock.sendall(data)
 
     def _receive(self, length):
-        _LOGGER.debug('Trying to receive a data with %d bytes' % length)
+        self._LOGGER.debug('Trying to receive a data with %d bytes' % length)
         raw_data = self._sock.recv(length)
-        _LOGGER.debug('Received data: %s' % str(raw_data))
+        self._LOGGER.debug('Received data: %s' % str(raw_data))
         return raw_data
 
 
     def _flush_receive_buffer(self):
-        _LOGGER.debug('Flushing receive buffer')
+        self._LOGGER.debug('Flushing receive buffer')
         while True:
             read_sock, _, _ = select.select([self._sock], [], [], self.timeout)
             if not read_sock:
-                _LOGGER.debug('Nothing received. buffer has been flushed')
+                self._LOGGER.debug('Nothing received. buffer has been flushed')
                 break
-            _LOGGER.debug('There is stil something in the buffer')
+            self._LOGGER.debug('There is stil something in the buffer')
             _ = self._receive(255)
 
     def _send_command(self, cmd: Command, send_only: bool = True):
-        _LOGGER.debug('Sending packet: {}'.format(cmd.byte_string()))
+        self._LOGGER.debug('Sending command({}) to {}: {}'.format(
+            cmd.__name__,
+            cmd.byte_string(),
+            self.ipaddr,
+        ))
         if send_only:
             self._send(cmd.byte_string())
         else:
@@ -192,6 +204,7 @@ class LocalLight(AbstractLight):
 
     def _get_status_data(self):
         data_arr = self._send_command(QueryStatus, send_only=False)
+        return data_arr
 
     def _connect(self, timeout=3):
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -199,20 +212,18 @@ class LocalLight(AbstractLight):
         self._sock.connect((self.ipaddr, self.port))
 
     def _send(self, data):
+        self._LOGGER.debug(
+            'Trying to send data(%s) to %s' % (str(data), self.ipaddr)
+        )
+
         self._sock.send(data)
 
     def _receive(self, length):
-        return self._sock.recv(length)
-
-    def _send_command(self, cmd: Command):
-        _LOGGER.debug('Sending packet: {}'.format(cmd.byte_string()))
-        self._send(cmd.byte_string())
-
-    def _get_status_data(self):
-        self._send_command(QueryStatus)
-        raw_data = self._sock.recv(QueryStatus.response_len)
-        data_arr = struct.unpack(
-            '!%dB' % QueryStatus.response_len,
-            raw_data
+        self._LOGGER.debug(
+            'Trying to receive %d bytes data from %s' % (length, self.ipaddr)
         )
-        return data_arr
+        data = self._sock.recv(length)
+        self._LOGGER.debug(
+            'Got %d bytes data from %s' % (len(data), self.ipaddr)
+        )
+        return data
