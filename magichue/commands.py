@@ -54,26 +54,76 @@ class Command:
 
 
 class TurnON(Command):
-    '''Command: Turn on light bulb.'''
+    '''Command: Turn on light bulb.
+    Response:
+    (240, 113, 35, 133)
+     |    |    |   |
+     |    |    |   Checksum
+     |    |    Status: 0x23(TurnON)
+     |    Header
+     Header: 0xf0(240): Remote, 0x0f(15): Local
+    '''
     array = [0x71, 0x23]
     response_len = 4
 
 
 class TurnOFF(Command):
-    '''Command: Turn off light bulb.'''
+    '''Command: Turn off light bulb.
+    Response:
+    (240, 113, 36, 133)
+     |    |    |   |
+     |    |    |   Checksum
+     |    |    Status: 0x24(TurnON)
+     |    Header
+     Header: 0xf0(240): Remote, 0x0f(15): Local
+    '''
     array = [0x71, 0x24]
     response_len = 4
 
 
 class QueryStatus(Command):
-    '''Command: Query status of light bulb.'''
+    '''Command: Query status of light bulb.
+    Response:
+    (129, 53, 36, 97, 0, 1, 0, 0, 0, 255, 7, 0, 15, 81)
+     |    |   |   |   |  |  |  |  |  |    |  |  |   |
+     |    |   |   |   |  |  |  |  |  |    |  |  |   CheckSum
+     |    |   |   |   |  |  |  |  |  |    |  |  Color Status: 0x0f(15) RGB, 0xf0(240) White
+     |    |   |   |   |  |  |  |  |  |    |  CoolWhite(0-255)
+     |    |   |   |   |  |  |  |  |  |    Version
+     |    |   |   |   |  |  |  |  |  WarmWhite(0-255)
+     |    |   |   |   |  |  |  |  B(0-255)
+     |    |   |   |   |  |  |  G(0-255)
+     |    |   |   |   |  |  R(0-255)
+     |    |   |   |   |  Speed(0x1-0x1f): 0x1 is fastest
+     |    |   |   |   Run/Pause
+     |    |   |   Mode
+     |    |   ON/OFF: 0x23(35) ON, 0x24(36) OFF
+     |    Device Type
+     Header
+    '''
     array = [0x81, 0x8a, 0x8b]
     response_len = 14
     needs_terminator = False
 
 
 class QueryCurrentTime(Command):
-    '''Command: Query time of bulb clock'''
+    '''Command: Query time of bulb clock
+    Response:
+    (240, 17, 20, 21, 12, 21, 17, 38, 7, 2, 0, 139)
+     |    |   |   |   |   |   |   |   |  |  |  |
+     |    |   |   |   |   |   |   |   |  |  |  Checksum
+     |    |   |   |   |   |   |   |   |  |  Reserved
+     |    |   |   |   |   |   |   |   |  Day of week
+     |    |   |   |   |   |   |   |   Second
+     |    |   |   |   |   |   |   Minute
+     |    |   |   |   |   |   Hour
+     |    |   |   |   |   Date
+     |    |   |   |   Month
+     |    |   |   Year
+     |    |   Header
+     |    Header
+     Header: 0xf0(240): Remote, 0x0f(15): Local
+    '''
     array = [0x11, 0x1a, 0x1b]
     response_len = 12
 
