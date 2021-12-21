@@ -73,7 +73,7 @@ class TurnOFF(Command):
     (240, 113, 36, 133)
      |    |    |   |
      |    |    |   Checksum
-     |    |    Status: 0x24(TurnON)
+     |    |    Status: 0x24(TurnOFF)
      |    Header
      Header: 0xf0(240): Remote, 0x0f(15): Local
     '''
