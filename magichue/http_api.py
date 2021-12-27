@@ -26,13 +26,13 @@ _LOGGER = logging.getLogger(__name__)
 
 @dataclass
 class RemoteDevice:
-    
+
     device_type: int
     version: int
     mac_addr: str
     local_ip: str
     state_str: str
-    
+
 
 class RemoteAPI:
 
@@ -60,13 +60,12 @@ class RemoteAPI:
             raise MagicHueAPIError('Unknown Eror: {}'.format(clean_text))
         return _decoded
 
-
     @classmethod
     def auth(
         cls,
         user: str,
         password: str,
-        client_id : str = ''
+        client_id: str = ''
     ):
         if not client_id:
             client_id = ''.join(
@@ -77,7 +76,7 @@ class RemoteAPI:
             'password': hashlib.md5(password.encode('utf8')).hexdigest(),
             'clientID': client_id,
         }
-        _LOGGER.debug(f'Logging in with email {user}')
+        _LOGGER.debug('Logging in with email {}'.format(user))
         res = requests.post(
             API_BASE+'/login/MagicHue',
             json=payload,
@@ -85,7 +84,7 @@ class RemoteAPI:
         )
 
         res_dict = cls.handle_api_response(res)
-        _LOGGER.debug(f'Login successful')
+        _LOGGER.debug('Login successful')
         return res_dict.get('token')
 
     @classmethod
@@ -93,7 +92,7 @@ class RemoteAPI:
         cls,
         user: str,
         password: str,
-        client_id : str = ''
+        client_id: str = ''
     ):
         token = cls.auth(user, password, client_id)
         return RemoteAPI(token=token)
@@ -106,23 +105,38 @@ class RemoteAPI:
         return RemoteAPI(token)
 
     def _post_with_token(self, endpoint, payload):
-        _LOGGER.debug(f'Sending POST request to {endpoint}, payload={payload}')
+        _LOGGER.debug(
+            'Sending POST request to {}, payload={}'.format(
+                endpoint,
+                payload,
+            )
+        )
         res = requests.post(
             API_BASE + endpoint,
             json=payload,
-            headers={'User-Agent': UA, 'token':self.token}
+            headers={'User-Agent': UA, 'token': self.token}
         )
-        _LOGGER.debug(f'Got response({res.status_code}): {res.text}')
+        _LOGGER.debug(
+            'Got response({}): {}'.format(
+                res.status_code,
+                res.text,
+            )
+        )
         res_dict = RemoteAPI.handle_api_response(res)
         return res_dict
 
     def _get_with_token(self, endpoint):
-        _LOGGER.debug(f'Sending GET request to {endpoint}')
+        _LOGGER.debug('Sending GET request to {}'.format(endpoint))
         res = requests.get(
             API_BASE + endpoint,
-            headers={'User-Agent': UA, 'token':self.token}
+            headers={'User-Agent': UA, 'token': self.token}
         )
-        _LOGGER.debug(f'Got response({res.status_code}): {res.text}')
+        _LOGGER.debug(
+            'Got response({}): {}'.format(
+                res.status_code,
+                res.text,
+            )
+        )
         res_dict = RemoteAPI.handle_api_response(res)
         return res_dict
 

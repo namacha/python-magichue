@@ -33,20 +33,20 @@ class Command:
         return arr + [cls.calc_checksum(arr)]
 
     @classmethod
-    def hex_array(cls, is_remote: bool=False) -> list:
+    def hex_array(cls, is_remote: bool = False) -> list:
         return cls.attach_checksum(
             cls.append_terminator(cls.array, is_remote)
         )
 
     @classmethod
-    def byte_string(cls, is_remote: bool=False) -> bytes:
+    def byte_string(cls, is_remote: bool = False) -> bytes:
         _arr = cls.attach_checksum(
             cls.append_terminator(cls.array, is_remote)
         )
         return struct.pack('!%dB' % len(_arr), *_arr)
 
     @classmethod
-    def hex_string(cls, is_remote: bool=False) -> str:
+    def hex_string(cls, is_remote: bool = False) -> str:
         _arr = cls.attach_checksum(
             cls.append_terminator(cls.array, is_remote)
         )

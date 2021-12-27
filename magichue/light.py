@@ -99,7 +99,6 @@ class AbstractLight(metaclass=ABCMeta):
         self._send_command(cmd)
 
 
-
 class RemoteLight(AbstractLight):
 
     _LOGGER = logging.getLogger(__name__ + '.RemoteLight')
@@ -120,7 +119,9 @@ class RemoteLight(AbstractLight):
             data = self.str2hexarray(self._send_request(cmd))
             if len(data) != cmd.response_len:
                 raise InvalidData(
-                    'Expect length: %d, got %d\n%s' % (cmd.response_len, len(data), str(data))
+                    'Expect length: %d, got %d\n%s' % (
+                        cmd.response_len, len(data), str(data)
+                    )
                 )
             return data
 
@@ -129,7 +130,8 @@ class RemoteLight(AbstractLight):
 
     @staticmethod
     def str2hexarray(hexstr: str) -> tuple:
-        return tuple([int(hexstr[i:i+2], 16) for i in range(0, len(hexstr), 2)])
+        ls = [int(hexstr[i:i+2], 16) for i in range(0, len(hexstr), 2)]
+        return tuple(ls)
 
     def _get_status_data(self):
         devices = self.api.get_online_devices()
@@ -198,7 +200,7 @@ class LocalLight(AbstractLight):
             else:
                 raise InvalidData(
                     'Expect length: %d, got %d\n%s' % (
-                        response_len,
+                        cmd.response_len,
                         len(decoded_data),
                         str(decoded_data)
                     )

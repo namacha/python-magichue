@@ -1,4 +1,5 @@
-from .commands import ( CHANGE_MODE,
+from .commands import (
+    CHANGE_MODE,
     CUSTOM_MODE,
     CUSTOM_MODE_TERMINATOR_1,
     CUSTOM_MODE_TERMINATOR_2,
@@ -67,7 +68,7 @@ class CustomMode(Mode):
     RESPONSE_LEN = RESPONSE_LEN_CUSTOM_MODE
 
     def __repr__(self):
-        return '<CustomMode: colors, speed={}, mode={}>'.format(
+        return '<CustomMode: {} colors, speed={}, mode={}>'.format(
             len(self.colors),
             self.speed,
             self.name,

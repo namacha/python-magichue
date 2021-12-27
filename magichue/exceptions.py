@@ -17,4 +17,3 @@ class InvalidData(Exception):
 class DeviceOffline(Exception):
     """Device is offline"""
     pass
-

@@ -302,7 +302,7 @@ class Light(object):
         
     @property
     def cww(self):
-        return (self._status.cw,self._status.w)
+        return (self._status.cw, self._status.w)
 
     @cww.setter
     def cww(self, cww):
