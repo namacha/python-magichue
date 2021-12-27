@@ -7,6 +7,8 @@ from string import (
     ascii_uppercase,
     digits
 )
+from typing import List
+
 import requests
 
 from .commands import Command
@@ -29,6 +31,7 @@ class RemoteDevice:
     version: int
     mac_addr: str
     local_ip: str
+    state_str: str
     
 
 class RemoteAPI:
@@ -142,6 +145,23 @@ class RemoteAPI:
         result = self._post_with_token('/sendCommandBatch/MagicHue', payload)
         return result
 
-    def get_devices(self) -> dict:
+    def get_online_devices(self, online_only=True) -> List[RemoteDevice]:
         result = self._get_with_token('/getMyBindDevicesAndState/MagicHue')
-        return result.get('data')
+        arr = result.get('data')
+        _LOGGER.debug('Found {} devices'.format(len(arr)))
+        devices = []
+        for dev_dict in arr:
+            if online_only and not dev_dict.get('isOnline'):
+                continue
+            dev = RemoteDevice(
+                device_type=dev_dict.get('deviceType'),
+                version=dev_dict.get('ledVersionNum'),
+                mac_addr=dev_dict.get('macAddress'),
+                local_ip=dev_dict.get('localIP'),
+                state_str=dev_dict.get('state'),
+            )
+            devices.append(dev)
+        return devices
+
+    def get_all_devices(self):
+        return self.get_online_devices(online_only=False)

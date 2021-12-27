@@ -132,10 +132,10 @@ class RemoteLight(AbstractLight):
         return tuple([int(hexstr[i:i+2], 16) for i in range(0, len(hexstr), 2)])
 
     def _get_status_data(self):
-        data_arr = self.api.get_devices()
-        for dev in data_arr:
-            if dev.get('macAddress') == self.macaddr and dev.get('isOnline'):
-                return self.str2hexarray(dev.get('state'))
+        devices = self.api.get_online_devices()
+        for dev in devices:
+            if dev.mac_addr == self.macaddr:
+                return self.str2hexarray(dev.state_str)
         raise DeviceOffline
 
 
