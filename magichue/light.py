@@ -12,6 +12,10 @@ from .commands import (
     QueryStatus,
     QueryCurrentTime
 )
+from .exceptions import (
+    InvalidData,
+    DeviceOffline
+)
 
 from .magichue import Status
 from . import modes
@@ -21,15 +25,11 @@ from . import bulb_types
 _LOGGER = logging.getLogger(__name__)
 
 
-class InvalidData(Exception):
-    pass
-
-
 class AbstractLight(metaclass=ABCMeta):
     '''An abstract class of MagicHue Light.'''
 
     status: Status
-    allow_fading: bool = False
+    allow_fading: bool
 
     def __repr__(self):
         on = 'on' if self.status.on else 'off'
@@ -83,9 +83,11 @@ class AbstractLight(metaclass=ABCMeta):
 
     def turn_on(self):
         self._send_command(TurnON)
+        self.status.on = True
 
     def turn_off(self):
         self._send_command(TurnOFF)
+        self.status.on = False
 
     def _update_status(self):
         data = self._get_status_data()
@@ -118,7 +120,7 @@ class RemoteLight(AbstractLight):
             data = self.str2hexarray(self._send_request(cmd))
             if len(data) != cmd.response_len:
                 raise InvalidData(
-                    'Expect length: %d, got %d\n%s' % (response_len, len(data), str(data))
+                    'Expect length: %d, got %d\n%s' % (cmd.response_len, len(data), str(data))
                 )
             return data
 
@@ -130,10 +132,11 @@ class RemoteLight(AbstractLight):
         return tuple([int(hexstr[i:i+2], 16) for i in range(0, len(hexstr), 2)])
 
     def _get_status_data(self):
-        data_arr = self.api.get_devices().get('data')
+        data_arr = self.api.get_devices()
         for dev in data_arr:
-            if dev.get('macAddress') == self.macaddr:
+            if dev.get('macAddress') == self.macaddr and dev.get('isOnline'):
                 return self.str2hexarray(dev.get('state'))
+        raise DeviceOffline
 
 
 class LocalLight(AbstractLight):
@@ -163,7 +166,6 @@ class LocalLight(AbstractLight):
         raw_data = self._sock.recv(length)
         self._LOGGER.debug('Received data: %s' % str(raw_data))
         return raw_data
-
 
     def _flush_receive_buffer(self):
         self._LOGGER.debug('Flushing receive buffer')

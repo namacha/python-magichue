@@ -1,6 +1,8 @@
 import random
 import logging
 import hashlib
+import json
+from dataclasses import dataclass
 from string import (
     ascii_uppercase,
     digits
@@ -8,6 +10,10 @@ from string import (
 import requests
 
 from .commands import Command
+from .exceptions import (
+    HTTPError,
+    MagicHueAPIError
+)
 
 
 API_BASE = 'https://wifij01us.magichue.net/app'
@@ -16,18 +22,41 @@ UA = 'Magic Hue/1.2.2 (IOS,13.400000,ja_JP)'
 _LOGGER = logging.getLogger(__name__)
 
 
-class HTTPError(Exception):
-    pass
-
-
-class MagicHueAPIError(Exception):
-    pass
-
+@dataclass
+class RemoteDevice:
+    
+    device_type: int
+    version: int
+    mac_addr: str
+    local_ip: str
+    
 
 class RemoteAPI:
 
     def __init__(self, token):
         self.token = token
+
+    @staticmethod
+    def sanitize_json_text(text: str) -> str:
+        '''Sometimes MagicHue api returns broken json text which ends with `.`'''
+        if text.endswith('.'):
+            _LOGGER.debug('A junk end of the line. Sanitized')
+            return text[:-1]
+        return text
+
+    @staticmethod
+    def handle_api_response(res: requests.Response):
+        clean_text = RemoteAPI.sanitize_json_text(res.text)
+        try:
+            _decoded = json.loads(clean_text)
+        except json.decoder.JSONDecodeError:
+            raise MagicHueAPIError('Invalid JSON String: {}'.format(clean_text))
+        if _decoded.get('code') != 0:
+            if _decoded.get('msg'):
+                raise MagicHueAPIError(_decoded.get('msg'))
+            raise MagicHueAPIError('Unknown Eror: {}'.format(clean_text))
+        return _decoded
+
 
     @classmethod
     def auth(
@@ -51,12 +80,10 @@ class RemoteAPI:
             json=payload,
             headers={'User-Agent': UA}
         )
-        if res.status_code != 200:
-            raise HTTPError
-        if res.json().get('code') != 0:
-            raise MagicHueAPIError(res.json().get('msg'))
+
+        res_dict = cls.handle_api_response(res)
         _LOGGER.debug(f'Login successful')
-        return res.json().get('token')
+        return res_dict.get('token')
 
     @classmethod
     def login_with_user_password(
@@ -83,11 +110,8 @@ class RemoteAPI:
             headers={'User-Agent': UA, 'token':self.token}
         )
         _LOGGER.debug(f'Got response({res.status_code}): {res.text}')
-        if res.status_code != 200:
-            raise HTTPError
-        if res.json().get('code') != 0:
-            raise MagicHueAPIError(res.json().get('msg'))
-        return res.json()
+        res_dict = RemoteAPI.handle_api_response(res)
+        return res_dict
 
     def _get_with_token(self, endpoint):
         _LOGGER.debug(f'Sending GET request to {endpoint}')
@@ -96,11 +120,8 @@ class RemoteAPI:
             headers={'User-Agent': UA, 'token':self.token}
         )
         _LOGGER.debug(f'Got response({res.status_code}): {res.text}')
-        if res.status_code != 200:
-            raise HTTPError
-        if res.json().get('code') != 0:
-            raise MagicHueAPIError(res.json().get('msg'))
-        return res.json()
+        res_dict = RemoteAPI.handle_api_response(res)
+        return res_dict
 
     def _send_request(self, cmd: Command, macaddr: str):
         payload = {
@@ -121,6 +142,6 @@ class RemoteAPI:
         result = self._post_with_token('/sendCommandBatch/MagicHue', payload)
         return result
 
-    def get_devices(self):
+    def get_devices(self) -> dict:
         result = self._get_with_token('/getMyBindDevicesAndState/MagicHue')
-        return result
+        return result.get('data')
