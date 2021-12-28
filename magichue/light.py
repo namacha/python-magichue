@@ -14,7 +14,8 @@ from .commands import (
 )
 from .exceptions import (
     InvalidData,
-    DeviceOffline
+    DeviceOffline,
+    DeviceDisconnected,
 )
 
 from .magichue import Status
@@ -63,9 +64,9 @@ class AbstractLight(metaclass=ABCMeta):
     def _send_command(self, cmd: Command, send_only: bool = True):
         pass
 
-    @abstractmethod
     def _get_status_data(self):
-        pass
+        data = self._send_command(QueryStatus, send_only=False)
+        return data
 
     def get_current_time(self) -> datetime:
         '''Get bulb clock time.'''
@@ -133,13 +134,6 @@ class RemoteLight(AbstractLight):
         ls = [int(hexstr[i:i+2], 16) for i in range(0, len(hexstr), 2)]
         return tuple(ls)
 
-    def _get_status_data(self):
-        devices = self.api.get_online_devices()
-        for dev in devices:
-            if dev.mac_addr == self.macaddr:
-                return self.str2hexarray(dev.state_str)
-        raise DeviceOffline
-
 
 class LocalLight(AbstractLight):
 
@@ -161,16 +155,31 @@ class LocalLight(AbstractLight):
         self._LOGGER.debug('Connection has been established with %s' % self.ipaddr)
 
     def _send(self, data):
-        self._sock.sendall(data)
+        self._LOGGER.debug(
+            'Trying to send data(%s) to %s' % (str(data), self.ipaddr)
+        )
+        if self._sock._closed:
+            raise DeviceDisconnected
+        self._sock.send(data)
 
     def _receive(self, length):
-        self._LOGGER.debug('Trying to receive a data with %d bytes' % length)
-        raw_data = self._sock.recv(length)
-        self._LOGGER.debug('Received data: %s' % str(raw_data))
-        return raw_data
+        self._LOGGER.debug(
+            'Trying to receive %d bytes data from %s' % (length, self.ipaddr)
+        )
+        if self._sock._closed:
+            raise DeviceDisconnected
+
+        data = self._sock.recv(length)
+        self._LOGGER.debug(
+            'Got %d bytes data from %s' % (len(data), self.ipaddr)
+        )
+        self._LOGGER.debug('Received data: %s' % str(data))
+        return data
 
     def _flush_receive_buffer(self):
         self._LOGGER.debug('Flushing receive buffer')
+        if self._sock._closed:
+            raise DeviceDisconnected
         while True:
             read_sock, _, _ = select.select([self._sock], [], [], self.timeout)
             if not read_sock:
@@ -178,6 +187,8 @@ class LocalLight(AbstractLight):
                 break
             self._LOGGER.debug('There is stil something in the buffer')
             _ = self._receive(255)
+            if not _:
+                raise DeviceDisconnected
 
     def _send_command(self, cmd: Command, send_only: bool = True):
         self._LOGGER.debug('Sending command({}) to {}: {}'.format(
@@ -206,28 +217,7 @@ class LocalLight(AbstractLight):
                     )
                 )
 
-    def _get_status_data(self):
-        data_arr = self._send_command(QueryStatus, send_only=False)
-        return data_arr
-
     def _connect(self, timeout=3):
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._sock.settimeout(timeout)
         self._sock.connect((self.ipaddr, self.port))
-
-    def _send(self, data):
-        self._LOGGER.debug(
-            'Trying to send data(%s) to %s' % (str(data), self.ipaddr)
-        )
-
-        self._sock.send(data)
-
-    def _receive(self, length):
-        self._LOGGER.debug(
-            'Trying to receive %d bytes data from %s' % (length, self.ipaddr)
-        )
-        data = self._sock.recv(length)
-        self._LOGGER.debug(
-            'Got %d bytes data from %s' % (len(data), self.ipaddr)
-        )
-        return data

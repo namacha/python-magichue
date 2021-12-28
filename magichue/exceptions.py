@@ -17,3 +17,8 @@ class InvalidData(Exception):
 class DeviceOffline(Exception):
     """Device is offline"""
     pass
+
+
+class DeviceDisconnected(Exception):
+    """Local device is disconnected"""
+    pass

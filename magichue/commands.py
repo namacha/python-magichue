@@ -2,11 +2,22 @@ import struct
 from typing import List
 
 
+class _Meta(type):
+    required_attributes = ['array', 'response_len']
+
+    def __new__(cls, classname, bases, _dict):
+        newclass = type.__new__(cls, classname, bases, _dict)
+        for attr_name in cls.required_attributes:
+            if not hasattr(newclass, attr_name):
+                raise NotImplementedError(f'{newclass.__name__}.{attr_name} is not set')
+        return newclass
+
+
 class Command:
 
+    needs_terminator = True
     array: List[int]
     response_len: int
-    needs_terminator = True
 
     @classmethod
     def append_terminator(cls, arr, is_remote):
@@ -53,7 +64,7 @@ class Command:
         return ''.join([hex(v)[2:].zfill(2) for v in _arr])
 
 
-class TurnON(Command):
+class TurnON(Command, metaclass=_Meta):
     '''Command: Turn on light bulb.
     Response:
     (240, 113, 35, 133)
@@ -67,7 +78,7 @@ class TurnON(Command):
     response_len = 4
 
 
-class TurnOFF(Command):
+class TurnOFF(Command, metaclass=_Meta):
     '''Command: Turn off light bulb.
     Response:
     (240, 113, 36, 133)
@@ -81,7 +92,7 @@ class TurnOFF(Command):
     response_len = 4
 
 
-class QueryStatus(Command):
+class QueryStatus(Command, metaclass=_Meta):
     '''Command: Query status of light bulb.
     Response:
     (129, 53, 36, 97, 0, 1, 0, 0, 0, 255, 7, 0, 15, 81)
@@ -106,7 +117,7 @@ class QueryStatus(Command):
     needs_terminator = False
 
 
-class QueryCurrentTime(Command):
+class QueryCurrentTime(Command, metaclass=_Meta):
     '''Command: Query time of bulb clock
     Response:
     (240, 17, 20, 21, 12, 21, 17, 38, 7, 2, 0, 139)
@@ -128,10 +139,16 @@ class QueryCurrentTime(Command):
     response_len = 12
 
 
-class QueryTimers(Command):
+class QueryTimers(Command, metaclass=_Meta):
     '''Command: Query scheduled timers'''
     array = [0x22, 0x2a, 0x2b]
-    response_len = 88
+    response_len = 94
+
+
+class QueryCustomMode(Command, metaclass=_Meta):
+    '''Query custom mode content'''
+    array = [0x52, 0x5a, 0x5b]
+    response_len = 70
 
 
 QUERY_STATUS_1 = 0x81

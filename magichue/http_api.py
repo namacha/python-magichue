@@ -56,7 +56,7 @@ class RemoteAPI:
             raise MagicHueAPIError('Invalid JSON String: {}'.format(clean_text))
         if _decoded.get('code') != 0:
             if _decoded.get('msg'):
-                raise MagicHueAPIError(_decoded.get('msg'))
+                raise MagicHueAPIError(f"{_decoded.get('msg')}")
             raise MagicHueAPIError('Unknown Eror: {}'.format(clean_text))
         return _decoded
 
