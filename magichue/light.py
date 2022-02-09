@@ -193,8 +193,8 @@ class LocalLight(AbstractLight):
     def _send_command(self, cmd: Command, send_only: bool = True):
         self._LOGGER.debug('Sending command({}) to {}: {}'.format(
             cmd.__name__,
-            cmd.byte_string(),
             self.ipaddr,
+            cmd.byte_string(),
         ))
         if send_only:
             self._send(cmd.byte_string())
