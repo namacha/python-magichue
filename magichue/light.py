@@ -1,8 +1,9 @@
 from abc import ABCMeta, abstractmethod
-import struct
 from datetime import datetime
+import struct
 import socket
 import select
+import colorsys
 import logging
 
 from .commands import (
@@ -59,6 +60,21 @@ class AbstractLight(metaclass=ABCMeta):
                     on,
                     *(self.status.rgb()),
                 )
+    @property
+    def on(self):
+        return self.status.on
+
+    @on.setter
+    def on(self, value):
+        if not isinstance(value, bool):
+            raise ValueError("Invalid value: Should be True or False")
+        if value:
+            self.status.on = True
+            return self.turn_on()
+        else:
+            self.status.on = False
+            return self.turn_off()
+
     @property
     def rgb(self):
         return self.status.rgb()
@@ -136,8 +152,68 @@ class AbstractLight(metaclass=ABCMeta):
         self._apply_status()
 
     @property
+    def hue(self):
+        h = colorsys.rgb_to_hsv(*self.status.rgb())[0]
+        return h
+
+    @hue.setter
+    def hue(self, h):
+        if not h <= 1:
+            raise ValueError("arg must not be more than 1")
+        sb = colorsys.rgb_to_hsv(*self.status.rgb())[1:]
+        rgb = map(int, colorsys.hsv_to_rgb(h, *sb))
+        self.status.update_rgb(rgb)
+        self._apply_status()
+
+    @property
+    def saturation(self):
+        s = colorsys.rgb_to_hsv(*self.status.rgb())[1]
+        return s
+
+    @saturation.setter
+    def saturation(self, s):
+        if not s <= 1:
+            raise ValueError("arg must not be more than 1")
+        h, v = colorsys.rgb_to_hsv(*self.status.rgb())[::2]
+        rgb = map(int, colorsys.hsv_to_rgb(h, s, v))
+        self.status.update_rgb(rgb)
+        self._apply_status()
+
+    @property
+    def brightness(self):
+        if self.is_white:
+            b = self.w
+        else:
+            b = colorsys.rgb_to_hsv(*self.status.rgb())[2]
+        return b
+
+    @brightness.setter
+    def brightness(self, v):
+        if self.is_white:
+            self.status.update_w(v)
+        else:
+            hs = colorsys.rgb_to_hsv(*self.status.rgb())[:2]
+            rgb = map(int, colorsys.hsv_to_rgb(hs[0], hs[1], v))
+            self.status.update_rgb(rgb)
+        self._apply_status()
+
+    @property
+    def speed(self):
+        return self.status.speed
+
+    @speed.setter
+    def speed(self, value):
+        if value >= 1:
+            value = 1
+        elif value < 0:
+            value = 0
+        value = utils.round_value(value, 0, 1)
+        self.status.speed = value
+        self._set_mode(self.mode)
+
+    @property
     def mode(self):
-        return self._status.mode
+        return self.status.mode
 
     @mode.setter
     def mode(self, v):
