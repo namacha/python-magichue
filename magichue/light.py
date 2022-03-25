@@ -59,6 +59,93 @@ class AbstractLight(metaclass=ABCMeta):
                     on,
                     *(self.status.rgb()),
                 )
+    @property
+    def rgb(self):
+        return self.status.rgb()
+
+    @rgb.setter
+    def rgb(self, rgb):
+        self.status.update_rgb(rgb)
+        self._apply_status()
+
+    @property
+    def r(self):
+        return self.status.r
+
+    @r.setter
+    def r(self, v):
+        self.status.update_r(v)
+        self._apply_status()
+
+    @property
+    def g(self):
+        return self.status.g
+
+    @g.setter
+    def g(self, v):
+        self.status.update_g(v)
+        self._apply_status()
+
+    @property
+    def b(self):
+        return self.status.b
+
+    @b.setter
+    def b(self, v):
+        self.status.update_b(v)
+        self._apply_status()
+
+    @property
+    def w(self):
+        return self.status.w
+
+    @w.setter
+    def w(self, v):
+        self.status.update_w(v)
+        self._apply_status()
+
+    @property
+    def cw(self):
+        return self.status.cw
+
+    @cw.setter
+    def cw(self, v):
+        self.status.update_cw(v)
+        self._apply_status()
+
+    @property
+    def cww(self):
+        return (self.status.cw, self.status.w)
+
+    @cww.setter
+    def cww(self, cww):
+        cw, w = cww
+        self.status.update_cw(cw)
+        self.status.update_w(w)
+        self._apply_status()
+
+    @property
+    def is_white(self):
+        return self.status.is_white
+
+    @is_white.setter
+    def is_white(self, v):
+        if not isinstance(v, bool):
+            raise ValueError("Invalid value: value must be a bool.")
+        self.status.is_white = v
+        self._apply_status()
+
+    @property
+    def mode(self):
+        return self._status.mode
+
+    @mode.setter
+    def mode(self, v):
+        if not isinstance(v, modes.Mode):
+            raise ValueError("Invalid value: value must be a instance of Mode")
+        cmd = Command.from_array(v._make_data())
+        self.status.mode = v
+        self._send_command(cmd)
 
     @abstractmethod
     def _send_command(self, cmd: Command, send_only: bool = True):
@@ -90,6 +177,9 @@ class AbstractLight(metaclass=ABCMeta):
         self._send_command(TurnOFF)
         self.status.on = False
 
+    def update_status(self):
+        self._update_status()
+
     def _update_status(self):
         data = self._get_status_data()
         self.status.parse(data)
@@ -108,6 +198,7 @@ class RemoteLight(AbstractLight):
         self.api = api
         self.macaddr = macaddr
         self.status = Status()
+        self._update_status()
 
     def _send_command(self, cmd: Command, send_only: bool = True):
         self._LOGGER.debug('Sending command({}) to: {}'.format(
@@ -146,6 +237,7 @@ class LocalLight(AbstractLight):
         self.ipaddr = ipaddr
         self._connect()
         self.status = Status()
+        self._update_status()
 
     def _connect(self):
         self._LOGGER.debug('Trying to make a connection with bulb(%s)' % self.ipaddr)
