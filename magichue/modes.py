@@ -59,7 +59,7 @@ class Mode:
 
     def _make_data(self):  # slowness is a integer value 1 to 49
         slowness = speed2slowness(self.speed)
-        d = [CHANGE_MODE, self.value, slowness, 0x0f]
+        d = [CHANGE_MODE, self.value, slowness]
         return d
 
 
