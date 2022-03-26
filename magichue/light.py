@@ -22,6 +22,7 @@ from .exceptions import (
 from .magichue import Status
 from . import modes
 from . import bulb_types
+from . import utils
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -30,8 +31,10 @@ _LOGGER = logging.getLogger(__name__)
 class AbstractLight(metaclass=ABCMeta):
     '''An abstract class of MagicHue Light.'''
 
+    _LOGGER = logging.getLogger(__name__ + '.AbstractLight')
+
     status: Status
-    allow_fading: bool
+    allow_fading: bool = True
 
     def __repr__(self):
         on = 'on' if self.status.on else 'off'
@@ -203,12 +206,9 @@ class AbstractLight(metaclass=ABCMeta):
 
     @speed.setter
     def speed(self, value):
-        if value >= 1:
-            value = 1
-        elif value < 0:
-            value = 0
         value = utils.round_value(value, 0, 1)
         self.status.speed = value
+        self.mode.speed = value
         self._set_mode(self.mode)
 
     @property
@@ -219,20 +219,29 @@ class AbstractLight(metaclass=ABCMeta):
     def mode(self, v):
         if not isinstance(v, modes.Mode):
             raise ValueError("Invalid value: value must be a instance of Mode")
-        cmd = Command.from_array(v._make_data())
+        if isinstance(v, modes.CustomMode):
+            self.status.speed = v.speed
         self.status.mode = v
-        self._send_command(cmd)
+        self._set_mode(v)
 
     @abstractmethod
     def _send_command(self, cmd: Command, send_only: bool = True):
         pass
 
+    def _set_mode(self, _mode):
+        self._LOGGER.debug("_set_mode")
+        cmd = Command.from_array(_mode._make_data())
+        self._send_command(cmd)
+
+
     def _get_status_data(self):
+        self._LOGGER.debug("_get_status_data")
         data = self._send_command(QueryStatus, send_only=False)
         return data
 
     def get_current_time(self) -> datetime:
         '''Get bulb clock time.'''
+        self._LOGGER.debug("get_current_time")
 
         data = self._send_command(QueryCurrentTime, send_only=False)
         bulb_date = datetime(
@@ -246,14 +255,19 @@ class AbstractLight(metaclass=ABCMeta):
         return bulb_date
 
     def turn_on(self):
+        '''Trun bulb power on'''
+        self._LOGGER.debug("turn_on")
         self._send_command(TurnON)
         self.status.on = True
 
     def turn_off(self):
+        '''Trun bulb power off'''
+        self._LOGGER.debug("turn_off")
         self._send_command(TurnOFF)
         self.status.on = False
 
     def update_status(self):
+        '''Sync local status with bulb'''
         self._update_status()
 
     def _update_status(self):
@@ -261,7 +275,16 @@ class AbstractLight(metaclass=ABCMeta):
         self.status.parse(data)
 
     def _apply_status(self):
+        self._LOGGER.debug("_apply_status")
         data = self.status.make_data()
+        if not self.allow_fading:
+            self._LOGGER.debug("allow_fading is False")
+            c = modes.CustomMode(
+                mode=modes.MODE_JUMP,
+                speed=0.1,
+                colors=[self.rgb]
+            )
+            self._set_mode(c)
         cmd = Command.from_array(data)
         self._send_command(cmd)
 
@@ -270,10 +293,11 @@ class RemoteLight(AbstractLight):
 
     _LOGGER = logging.getLogger(__name__ + '.RemoteLight')
 
-    def __init__(self, api, macaddr: str):
+    def __init__(self, api, macaddr: str, allow_fading: bool=True):
         self.api = api
         self.macaddr = macaddr
         self.status = Status()
+        self.allow_fading = allow_fading
         self._update_status()
 
     def _send_command(self, cmd: Command, send_only: bool = True):
@@ -309,10 +333,11 @@ class LocalLight(AbstractLight):
     port = 5577
     timeout = 1
 
-    def __init__(self, ipaddr):
+    def __init__(self, ipaddr: str, allow_fading: bool=True):
         self.ipaddr = ipaddr
         self._connect()
         self.status = Status()
+        self.allow_fading = allow_fading
         self._update_status()
 
     def _connect(self):
