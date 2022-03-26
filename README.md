@@ -6,21 +6,32 @@ Magichue(as known as Magichome, FluxLED, etc.) is a cheap smart led bulb that yo
 
 I tested this library with RGBWWCW(v7), RGB(v8), RGBWW(v8) bulbs.
 
+
+**Now it is possible to use Remote API !**
+
 # Example
 Rainbow cross-fade.
 ```python
 import time
 import magichue
 
+user = 'username@example.com'
+password = 'password'
+api = magichue.RemoteAPI.login_user_password(user=user, password=password)
+bulbs = api.get_online_devices()
+light = bulbs[0]
 
-light = magichue.Light('192.168.0.20')  # change address
+
+light = magichue.LocalLight(lights[0])
 if not light.on:
     light.on = True
 
 if light.is_white:
   light.is_white = False
 
-light.rgb = (255, 255, 255)
+light.rgb = (0, 0, 0)
+light.brightness = 255
+light.saturation = 1
 
 for hue in range(1000):
     light.hue = hue / 1000
@@ -35,18 +46,50 @@ $ pip install python-magichue
 ```
 
 # Usage
-import magichue.
+
+## Remote API
+Now it's available to use MagicHome HTTP API.
+
+You have to login and register your bulb with MagicHome account in advance.
+### Login with Username/Password
 ```python
-import magichue
-light = magichue.Light('192.168.0.20')
+api = magichue.RemoteAPI.login_with_user_password(user='xxx', password='xxx')
+print(api.token)  # you can show TOKEN and save it.
 ```
 
-## Discover bulbs on lan
+### Login with Token
+It is recommended to use token string.
 ```python
-from magichue import discover_bulbs
+TOKEN = 'xxx'
+api = magichue.RemoteAPI.login_with_token(TOKEN)
+```
+### Make bulb instance
+```python
+TOKEN = 'xxx'
+api = magichue.RemoteAPI.login_with_token(TOKEN)
+light = RemoteLight(api=api, macaddr='xxx')
+```
 
+## Discover bulbs
 
-print(discover_bulbs())  # returns list of bulb address
+### Local bulbs
+```python
+from magichue import discover_bulbs, LocalLight
+addrs = discover_bulbs()  # returns list of bulb address
+light = magichue.LocalLight(addrs[0])
+```
+
+### Remote bulbs
+```python
+from magichue import RemoteAPI
+
+TOKEN = 'xxx'
+api = magichue.RemoteAPI.login_with_token(TOKEN)
+online_bulbs = api.get_online_devices()
+light = online_bulbs[0]
+
+# It is also possible to retrieve all bulbs binded with your account.
+all_devices = api.get_all_devices()
 ```
 
 ## Power State
@@ -60,6 +103,9 @@ print(light.on)  # => True if light is on else False
 ```python
 light.on = True
 light.on = False
+# or
+light.turn_on()
+light.turn_off()
 ```
 
 ## Getting color
@@ -126,6 +172,11 @@ To disable fading effect,
 light.rgb = (128, 0, 20)  # It fades
 light.allow_fading = False  # True by default
 light.rgb = (20, 0, 128)  # Jumps
+```
+
+## Bulb clock
+```python
+print(light.get_current_time())
 ```
 
 
@@ -221,3 +272,10 @@ light.mode = mypattern1
 
 ---
 Other features are in development.
+
+## Debugging
+Putting this snippet to begging of your code, this library outputs debug log.
+```python
+import loggging
+logging.basicConfig(level=logging.DEBUG)
+```

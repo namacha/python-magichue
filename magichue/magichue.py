@@ -43,7 +43,7 @@ class Status(object):
             r, g, b = v
         except ValueError:
             raise ValueError(
-                'Invalid value: rgb must be a list or tuple which has 3 items'
+                "Invalid value: rgb must be a list or tuple which has 3 items"
             )
         self.update_r(r)
         self.update_g(g)
@@ -51,7 +51,7 @@ class Status(object):
 
     def update_w(self, v):
         self.w = utils.round_value(v, 0, 255)
-      
+
     def update_cw(self, v):
         self.cw = utils.round_value(v, 0, 255)
 
@@ -68,12 +68,14 @@ class Status(object):
         self.version = data[10]
         self.cw = data[11]
         self.is_white = data[12] == commands.TRUE
-        self.mode = modes._VALUE_TO_MODE.get(mode_value, modes.Mode(mode_value, 1, 'UNKOWN'))
+        self.mode = modes._VALUE_TO_MODE.get(
+            mode_value, modes.Mode(mode_value, 1, "UNKOWN")
+        )
         slowness = data[5]
         self.speed = utils.slowness2speed(slowness)
 
     def make_data(self):
-        is_white = 0x0f if self.is_white else 0xf0
+        is_white = 0x0F if self.is_white else 0xF0
         if self.bulb_type == bulb_types.BULB_RGBWWCW:
             data = [
                 commands.SET_COLOR,
@@ -83,7 +85,7 @@ class Status(object):
                 self.w if self.w else 0,
                 self.cw,
                 is_white,
-                0x0f  # 0x0f is a terminator
+                0x0F,  # 0x0f is a terminator
             ]
         else:
             data = [
@@ -93,7 +95,7 @@ class Status(object):
                 self.b,
                 self.w if self.w else 0,
                 is_white,
-                0x0f  # 0x0f is a terminator
+                0x0F,  # 0x0f is a terminator
             ]
         return data
 
@@ -103,36 +105,43 @@ class Light(object):
     PORT = 5577
 
     def __repr__(self):
-        on = 'on' if self.on else 'off'
+        on = "on" if self.on else "off"
         if self._status.mode.value != modes._NORMAL:
-            return '<Light: %s (%s)>' % (on, self._status.mode.name)
+            return "<Light: %s (%s)>" % (on, self._status.mode.name)
         else:
             if self._status.bulb_type == bulb_types.BULB_RGBWW:
-                return '<Light: {} (r:{} g:{} b:{} w:{})>'.format(
+                return "<Light: {} (r:{} g:{} b:{} w:{})>".format(
                     on,
                     *(self._status.rgb()),
                     self._status.w,
                 )
             if self._status.bulb_type == bulb_types.BULB_RGBWWCW:
-                return '<Light: {} (r:{} g:{} b:{} w:{} cw:{})>'.format(
+                return "<Light: {} (r:{} g:{} b:{} w:{} cw:{})>".format(
                     on,
                     *(self._status.rgb()),
                     self._status.w,
                     self._status.cw,
                 )
             if self._status.bulb_type == bulb_types.BULB_TAPE:
-                return '<Light: {} (r:{} g:{} b:{})>'.format(
+                return "<Light: {} (r:{} g:{} b:{})>".format(
                     on,
                     *(self._status.rgb()),
                 )
 
     def __init__(
-            self,
-            addr,
-            port=PORT,
-            name="None",
-            confirm_receive_on_send=False,
-            allow_fading=True):
+        self,
+        addr,
+        port=PORT,
+        name="None",
+        confirm_receive_on_send=False,
+        allow_fading=True,
+    ):
+
+        import warnings
+
+        message = "`Light` is deprecated and will be removed in the future. Use `LocalLight` or `RemoteLight` instead"
+        warnings.warn(message, UserWarning)
+
         self.addr = addr
         self.port = port
         self.name = name
@@ -157,7 +166,7 @@ class Light(object):
 
     def _send_with_checksum(self, data, response_len, receive=True):
         data_with_checksum = self._attach_checksum(data)
-        format_str = '!%dB' % len(data_with_checksum)
+        format_str = "!%dB" % len(data_with_checksum)
         data = struct.pack(format_str, *data_with_checksum)
         self._send(data)
         if receive:
@@ -167,21 +176,13 @@ class Light(object):
     def _turn_on(self):
         on_data = [commands.TURN_ON_1, commands.TURN_ON_2, commands.TURN_ON_3]
         return self._send_with_checksum(
-            on_data,
-            commands.RESPONSE_LEN_POWER,
-            receive=self.confirm_receive_on_send
+            on_data, commands.RESPONSE_LEN_POWER, receive=self.confirm_receive_on_send
         )
 
     def _turn_off(self):
-        off_data = [
-            commands.TURN_OFF_1,
-            commands.TURN_OFF_2,
-            commands.TURN_OFF_3
-        ]
+        off_data = [commands.TURN_OFF_1, commands.TURN_OFF_2, commands.TURN_OFF_3]
         return self._send_with_checksum(
-            off_data,
-            commands.RESPONSE_LEN_POWER,
-            receive=self.confirm_receive_on_send
+            off_data, commands.RESPONSE_LEN_POWER, receive=self.confirm_receive_on_send
         )
 
     def _flush_receive_buffer(self, timeout=0.2):
@@ -218,10 +219,7 @@ class Light(object):
             cmd,
             commands.RESPONSE_LEN_QUERY_STATUS,
         )
-        data = struct.unpack(
-            '!%dB' % commands.RESPONSE_LEN_QUERY_STATUS,
-            raw_data
-        )
+        data = struct.unpack("!%dB" % commands.RESPONSE_LEN_QUERY_STATUS, raw_data)
         return data
 
     def _update_status(self):
@@ -241,9 +239,7 @@ class Light(object):
             )
             self._set_mode(c)
         self._send_with_checksum(
-            data,
-            commands.RESPONSE_LEN_SET_COLOR,
-            receive=self.confirm_receive_on_send
+            data, commands.RESPONSE_LEN_SET_COLOR, receive=self.confirm_receive_on_send
         )
 
     @property
@@ -290,7 +286,7 @@ class Light(object):
     def w(self, v):
         self._status.update_w(v)
         self._apply_status()
-        
+
     @property
     def cw(self):
         return self._status.cw
@@ -299,17 +295,17 @@ class Light(object):
     def cw(self, v):
         self._status.update_cw(v)
         self._apply_status()
-        
+
     @property
     def cww(self):
-        return (self._status.cw,self._status.w)
+        return (self._status.cw, self._status.w)
 
     @cww.setter
     def cww(self, cww):
         self._status.update_cw(cww[0])
         self._status.update_w(cww[1])
         self._apply_status()
-        
+
     @property
     def is_white(self):
         return self._status.is_white
@@ -403,10 +399,10 @@ class Light(object):
     @property
     def mode_str(self):
         import warnings
-        message =\
-            '`.mode_str` is deprecated and will be removed in the future.'
+
+        message = "`.mode_str` is deprecated and will be removed in the future."
         warnings.warn(message, UserWarning)
-        return ''
+        return ""
 
     @mode_str.setter
     def mode_str(self, value):
@@ -430,7 +426,5 @@ class Light(object):
         mode.speed = self.speed
         self._status.mode = mode
         self._send_with_checksum(
-            mode._make_data(),
-            mode.RESPONSE_LEN,
-            receive=self.confirm_receive_on_send
+            mode._make_data(), mode.RESPONSE_LEN, receive=self.confirm_receive_on_send
         )

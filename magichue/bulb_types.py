@@ -5,10 +5,10 @@ BULB_RGBWWCW = 0x35
 
 def str_bulb_type(bulb_type):
     if bulb_type == BULB_RGBWW:
-        return 'rgbww'
+        return "rgbww"
     if bulb_type == BULB_TAPE:
-        return 'tape'
+        return "tape"
     if bulb_type == BULB_RGBWWCW:
-        return 'rgbwwcw'
+        return "rgbwwcw"
     else:
-        return 'UNKNOWN'
+        return "UNKNOWN"
