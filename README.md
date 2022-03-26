@@ -17,7 +17,7 @@ import magichue
 
 user = 'username@example.com'
 password = 'password'
-api = magichue.RemoteAPI.login_user_password(user=user, password=password)
+api = magichue.RemoteAPI.login_with_user_password(user=user, password=password)
 bulbs = api.get_online_devices()
 light = bulbs[0]
 
