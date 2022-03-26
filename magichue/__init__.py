@@ -6,5 +6,5 @@ from .http_api import RemoteAPI
 
 
 __author__ = "namacha"
-__version__ = "0.2.9.3"
+__version__ = "0.3.1"
 __license__ = "MIT"
