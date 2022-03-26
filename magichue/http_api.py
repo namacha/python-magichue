@@ -23,7 +23,7 @@ class RemoteDevice:
 
     device_type: int
     version: int
-    mac_addr: str
+    macaddr: str
     local_ip: str
     state_str: str
 
@@ -144,7 +144,7 @@ class RemoteAPI:
             dev = RemoteDevice(
                 device_type=dev_dict.get("deviceType"),
                 version=dev_dict.get("ledVersionNum"),
-                mac_addr=dev_dict.get("macAddress"),
+                macaddr=dev_dict.get("macAddress"),
                 local_ip=dev_dict.get("localIP"),
                 state_str=dev_dict.get("state"),
             )
