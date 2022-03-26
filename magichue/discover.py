@@ -9,7 +9,7 @@ def make_socket(timeout):
     return sock
 
 
-def discover_bulbs(timeout=1, broadcast_ip='255.255.255.255'):
+def discover_bulbs(timeout=1, broadcast_ip="255.255.255.255"):
     DISCOVERY_PORT = 48899
     DISCOVERY_MSG = b"HF-A11ASSISTHREAD"
     addrs = []
