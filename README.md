@@ -17,9 +17,9 @@ import magichue
 
 user = 'username@example.com'
 password = 'password'
-api = magichue.RemoteAPI.login_with_user_password(user=user, password=password)
-bulbs = api.get_online_devices()
-light = bulbs[0]
+api = magichue.RemoteAPI.login_user_password(user=user, password=password)
+devices = api.get_online_devices()
+light = magichue.RemoteLight(api=api, macaddr=devices[0].macaddr)
 
 
 light = magichue.LocalLight(lights[0])
@@ -48,7 +48,7 @@ $ pip install python-magichue
 # Usage
 
 ## Remote API
-It's available to use MagicHome HTTP API.
+Now it's available to use MagicHome HTTP API.
 
 You have to login and register your bulb with MagicHome account in advance.
 ### Login with Username/Password
