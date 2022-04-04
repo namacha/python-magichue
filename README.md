@@ -49,9 +49,8 @@ $ pip install python-magichue
 # Usage
 
 ## Remote API
-Now it's available to use MagicHome HTTP API.
-
 You have to login and register your bulb with MagicHome account in advance.
+
 ### Login with Username/Password
 ```python
 api = magichue.RemoteAPI.login_with_user_password(user='xxx', password='xxx')
