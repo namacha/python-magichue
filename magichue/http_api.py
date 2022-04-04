@@ -8,6 +8,7 @@ from typing import List
 
 import requests
 
+from .light import RemoteLight
 from .commands import Command
 from .exceptions import HTTPError, MagicHueAPIError
 
@@ -132,6 +133,14 @@ class RemoteAPI:
         }
         result = self._post_with_token("/sendCommandBatch/MagicHue", payload)
         return result
+
+    def get_online_bulbs(self, online_only=True) -> List[RemoteLight]:
+        devices = self.get_online_devices(online_only=online_only)
+        bulbs = [
+            RemoteLight(api=self, macaddr=dev.macaddr)
+            for dev in devices
+        ]
+        return bulbs
 
     def get_online_devices(self, online_only=True) -> List[RemoteDevice]:
         result = self._get_with_token("/getMyBindDevicesAndState/MagicHue")

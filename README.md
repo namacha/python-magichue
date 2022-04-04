@@ -18,11 +18,12 @@ import magichue
 user = 'username@example.com'
 password = 'password'
 api = magichue.RemoteAPI.login_user_password(user=user, password=password)
-devices = api.get_online_devices()
-light = magichue.RemoteLight(api=api, macaddr=devices[0].macaddr)
+light = api.get_online_bulbs()[0]
+
+# local_device_ips = magcihue.discover_bulbs()
+# light = magichue.LocalLight(local_device_ips[0])
 
 
-light = magichue.LocalLight(lights[0])
 if not light.on:
     light.on = True
 
@@ -85,10 +86,12 @@ from magichue import RemoteAPI
 
 TOKEN = 'xxx'
 api = magichue.RemoteAPI.login_with_token(TOKEN)
-online_bulbs = api.get_online_devices()
+online_bulbs = api.get_online_bulbs()
 light = online_bulbs[0]
 
-# It is also possible to retrieve all bulbs binded with your account.
+# Getting online device information.
+online_devices = api.get_online_devices()
+# It is also possible to retrieve all device info binded with your account.
 all_devices = api.get_all_devices()
 ```
 
