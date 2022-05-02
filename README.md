@@ -20,7 +20,7 @@ password = 'password'
 api = magichue.RemoteAPI.login_with_user_password(user=user, password=password)
 light = api.get_online_bulbs()[0]
 
-# local_device_ips = magcihue.discover_bulbs()
+# local_device_ips = magichue.discover_bulbs()
 # light = magichue.LocalLight(local_device_ips[0])
 
 
@@ -28,7 +28,7 @@ if not light.on:
     light.on = True
 
 if light.is_white:
-  light.is_white = False
+    light.is_white = False
 
 light.rgb = (0, 0, 0)
 light.brightness = 255
