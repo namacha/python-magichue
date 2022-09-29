@@ -74,7 +74,7 @@ class Status(object):
         slowness = data[5]
         self.speed = utils.slowness2speed(slowness)
 
-    def make_data(self):
+    def make_data(self, needs_terminator=True):
         is_white = 0x0F if self.is_white else 0xF0
         if self.bulb_type == bulb_types.BULB_RGBWWCW:
             data = [
@@ -85,7 +85,6 @@ class Status(object):
                 self.w if self.w else 0,
                 self.cw,
                 is_white,
-                0x0F,  # 0x0f is a terminator
             ]
         else:
             data = [
@@ -95,9 +94,13 @@ class Status(object):
                 self.b,
                 self.w if self.w else 0,
                 is_white,
-                0x0F,  # 0x0f is a terminator
             ]
+
+        if needs_terminator:
+            data += [0x0F]
+
         return data
+
 
 
 class Light(object):

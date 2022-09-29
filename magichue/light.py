@@ -270,7 +270,7 @@ class AbstractLight(metaclass=ABCMeta):
 
     def _apply_status(self):
         self._LOGGER.debug("_apply_status")
-        data = self.status.make_data()
+        data = self.status.make_data(needs_terminator=False)
         if not self.allow_fading:
             self._LOGGER.debug("allow_fading is False")
             c = modes.CustomMode(mode=modes.MODE_JUMP, speed=0.1, colors=[self.rgb])
